@@ -1,0 +1,36 @@
+{
+  "name": "intruders-server-e2e",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "tsc": "tsc --project .",
+    "test": "jest --coverage"
+  },
+  "dependencies": {
+    "lodash": "^4.17.21"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.2.4",
+    "@types/lodash": "^4.14.161",
+    "@types/node": "^10.14.19",
+    "@types/request-promise": "^4.1.48",
+    "jest": "^26.6.3",
+    "request-promise": "^4.2.6",
+    "ts-jest": "^26.5.2",
+    "ts-loader": "^6.2.2",
+    "ts-node": "^10.4.0",
+    "tslint": "^5.20.0",
+    "typescript": "^4.0.2"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testTimeout": 15000,
+    "testEnvironment": "node",
+    "testMatch": [
+      "<rootDir>/src/test/*.spec.ts"
+    ],
+    "roots": [
+      "<rootDir>/src"
+    ]
+  }
+}

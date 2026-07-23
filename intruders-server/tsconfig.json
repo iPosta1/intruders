@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "outDir": "lib",
+    "resolveJsonModule": true,
+    "moduleResolution": "node",
+    "target": "es2019",
+    "module": "commonjs",
+    "skipLibCheck": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "sourceMap": true,
+    "strictNullChecks": false,
+  },
+  "exclude": ["./lib", "./test/**"]
+}
