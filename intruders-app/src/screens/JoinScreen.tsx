@@ -18,11 +18,11 @@ export const JoinScreen = ({ route }: Props) => {
         if (player) {
             POST('/join-game', {gameId: params.gameId}).then(status => {
                 if (status.ok) {
-                    navigation.navigate('GameScreen', { gameId: params.gameId });
+                    navigation.replace('GameScreen', { gameId: params.gameId });
                 } else {
-                    navigation.navigate('MainScreen');
+                    navigation.replace('MainScreen');
                 }
-            }).catch(() => navigation.navigate('MainScreen'));
+            }).catch(() => navigation.replace('MainScreen'));
         }        
     }, [player?.id]);
 

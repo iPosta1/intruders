@@ -1,31 +1,11 @@
-import { Animated, Dimensions, StyleSheet, Text, View } from "react-native";
-import React, { useEffect, useState } from "react";
+import { Dimensions, StyleSheet, Text, View } from "react-native";
+import React from "react";
 import { colors } from "../../utils/constants";
 
 const FAKE_TEXT = 'This is a fake text, dont read it or you will die! ';
 
 export const getFakePlayerElements = (width: number, players: number, leader: string, mission: number) => {
 
-    const opacityAnimationValue = new Animated.Value(0);
-
-    Animated.loop(
-        Animated.sequence([
-            Animated.timing(opacityAnimationValue, {
-                toValue: 1,
-                duration: 500,
-
-                useNativeDriver: false
-            }),
-            Animated.timing(opacityAnimationValue, {
-                toValue: 0,
-                duration: 500,
-                useNativeDriver: false
-            })
-        ]),
-        {
-            iterations: -1
-        }
-    ).start();
     const items: any = [];
 
     const pushSquareBrick = () => {
@@ -79,7 +59,7 @@ export const getFakePlayerElements = (width: number, players: number, leader: st
             </View>
             <View style={styles.leaderStatusItem}>
                 <Text style={styles.leaderStatusText}>{`Mission: ${mission}`}</Text>
-                <Animated.View style={{ ...styles.caretka, opacity: opacityAnimationValue }} />
+                <View style={styles.caretka} />
             </View>
         </View>);
     }
@@ -317,7 +297,7 @@ const styles = StyleSheet.create({
         shadowRadius: 1,
     },
     fakeText: {
-        fontSize: 3,
+        fontSize: 7,
         color: colors.greenDigital,
         fontFamily: 'title',
         marginLeft: 5,

@@ -101,6 +101,7 @@ export class GameService {
     protected async leaveGame(params: ParamsMap) {
         const gameState = await this.loadGameState(params.gameId);
         if (gameState.finished) {
+            await this.gameDao.deletePlayer(params.gameId, this.userId);
             return;
         }
         if (gameState.status === GAME_STATUS.WAITING_PLAYERS_TO_JOIN && gameState.creator !== this.userId) {
@@ -113,14 +114,18 @@ export class GameService {
 
     @checkGameId()
     protected async changeName(params: ParamsMap) {
-        if (params.newName.length > 16) {
+        const newName = params.newName?.trim();
+        if (!newName) {
+            throw new Error('Name is required');
+        }
+        if (newName.length > 16) {
             throw new Error('Name is too long');
         }
         const game = await this.gameDao.getGame(params.gameId);
-        if (!game || game.status !== GAME_STATUS.WAITING_PLAYERS_TO_JOIN) {
-            throw new Error('Cannot change name when the game has already started');
+        if (!game) {
+            throw new Error('The game does not exist');
         }
-        await this.gameDao.changeName(params.gameId, this.userId, params.newName);
+        await this.gameDao.changeName(params.gameId, this.userId, newName);
     }
 
     @checkGameId()
@@ -225,6 +230,9 @@ export class GameService {
         if (!gameState.missions[gameState.mission].playersOnMission.includes(userPlayerIndex)) {
             throw new Error('You can not participate in this mission');
         }
+        if (gameState.missions[gameState.mission].missionActions[userPlayerIndex]) {
+            throw new Error('You have already acted on this mission');
+        }
         if (params.action === MISSION_ACTION.FAIL && gameState.players[userPlayerIndex].role !== ROLE.SPY) {
             throw new Error('Only a spy can fail a mission');
         }
@@ -326,6 +334,7 @@ export class GameService {
         const missions: { [key: string]: MissionStateResponse } = {};
         if (!!gameState.finished) {
             return {
+                gameId: gameState.gameId,
                 finished: gameState.finished,
                 status: GAME_STATUS.GAME_FINISHED,
             } as any;
@@ -335,10 +344,13 @@ export class GameService {
                 status: gameState.missions[missionNumber].status,
                 playersOnMission: gameState.missions[missionNumber].playersOnMission,
                 preSelectedPlayers: gameState.missions[missionNumber].preSelectedPlayers,
-                missionActions: gameState.missions[missionNumber].status === MISSION_STATUS.MISSIOM_FAILED ||
-                    gameState.missions[missionNumber].status === MISSION_STATUS.MISSION_SUCCEED ?
-                    Object.keys(gameState.missions[missionNumber].missionActions)
-                        .map(playerId => gameState.missions[missionNumber].missionActions[playerId]) : undefined,
+                missionActions: Object.keys(gameState.missions[missionNumber].missionActions)
+                    .map(playerId =>
+                        gameState.missions[missionNumber].status === MISSION_STATUS.MISSIOM_FAILED ||
+                        gameState.missions[missionNumber].status === MISSION_STATUS.MISSION_SUCCEED
+                            ? gameState.missions[missionNumber].missionActions[playerId]
+                            : MISSION_ACTION.UNKNOWN
+                    ),
                 votes: Object.keys(gameState.missions[missionNumber].votes).map(playerId => gameState.missions[missionNumber].votes[playerId])
             }
         });
@@ -378,7 +390,8 @@ export class GameService {
         } else if (gameState.status === GAME_STATUS.WAITING_PLAYERS_MISSION_APPROVALS) {
             return GAME_STATUS.APPROVE_OR_REJECT_PLAYERS;
         } else if (gameState.status === GAME_STATUS.WAITING_MISSION_PLAYERS_TO_FAIL_OR_SUCCESS) {
-            return gameState.missions[gameState.mission].playersOnMission.includes(playerIndex) ? GAME_STATUS.ACT_MISSON :
+            return gameState.missions[gameState.mission].playersOnMission.includes(playerIndex) &&
+                !gameState.missions[gameState.mission].missionActions[playerIndex] ? GAME_STATUS.ACT_MISSON :
                 GAME_STATUS.WAITING_MISSION_PLAYERS_TO_FAIL_OR_SUCCESS;
         } else if (gameState.status === GAME_STATUS.WAITING_PLAYERS_TO_JOIN) {
             return isALeader ? GAME_STATUS.START_GAME : GAME_STATUS.WAITING_PLAYERS_TO_JOIN;

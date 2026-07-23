@@ -19,14 +19,14 @@ export const GameScreen = ({ route }: Props) => {
     const { player } = React.useContext(AppContext);
     const params = route?.params as any;
 
-    const { data: gameStatus, mutate } = useGameStatus(params.gameId, player?.id);
+    const { data: gameStatus, isLoading, mutate } = useGameStatus(params.gameId, player?.id);
 
     useEffect(() => {
-        if (gameStatus === null) {
-            navigation.navigate('MainScreen');
+        if (!isLoading && gameStatus === null) {
+            navigation.reset({ index: 0, routes: [{ name: 'MainScreen' }] });
         }
-    }, [gameStatus]);
+    }, [gameStatus, isLoading, navigation]);
 
-    return (!gameStatus ? <LoadingScreen/> : (gameStatus?.status === GAME_STATUS.WAITING_PLAYERS_TO_JOIN ? <Lobby gameState={gameStatus} /> :
-        (gameStatus?.status === GAME_STATUS.GAME_FINISHED ? <GameResult gameState={gameStatus}/> : <Game gameState={gameStatus} mutate={mutate}/>)));
+    return (!gameStatus ? <LoadingScreen/> : (gameStatus?.status === GAME_STATUS.WAITING_PLAYERS_TO_JOIN ? <Lobby gameState={gameStatus} mutate={mutate} /> :
+        (gameStatus?.status === GAME_STATUS.GAME_FINISHED ? <GameResult gameState={gameStatus} /> : <Game gameState={gameStatus} mutate={mutate}/>)));
 }

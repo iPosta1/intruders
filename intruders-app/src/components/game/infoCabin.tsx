@@ -1,4 +1,4 @@
-import { Dimensions, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { GameStateResponse, GAME_STATUS, VOTE } from "../../types/gameServerTypes";
 import React from "react";
 import { LinearGradient } from "expo-linear-gradient";
@@ -10,10 +10,10 @@ import { ComputerScreen } from "../shared/computerScreen";
 import { AnimatedCursor } from "../shared/animatedCursor";
 import { colors } from "../../utils/constants";
 
-export const InfoCabin = ({ gameState, showRoles }: { gameState?: GameStateResponse, showRoles: boolean }) => {
+export const InfoCabin = ({ gameState, showRoles, embedded = false }: { gameState?: GameStateResponse, showRoles: boolean, embedded?: boolean }) => {
     return (
-        <GradientPanel>
-            <ComputerScreen width={Dimensions.get("screen").width - 40} maxWidth={480} maxHeight={200}>
+        <GradientPanel embedded={embedded} height={embedded ? 116 : 160}>
+            <ComputerScreen embedded={embedded} width="100%" height={104} maxWidth={520}>
                 <View style={styles.softwareContainer}>
                     {!showRoles ?
                         <View style={styles.gameStatusContainer}>
@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
     softwareContainer: {
         flex: 1,
         maxWidth: 440,
-        width: Dimensions.get("screen").width - 80,
+        width: "100%",
         alignContent: "center",
         justifyContent: 'center',
         alignItems: 'center',
@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
     gameStatusText: {
         flex: 1,
         fontFamily: 'title',
-        fontSize: 12,
+        fontSize: 15,
         color: colors.greenDigital,
         marginTop: 5,
     },

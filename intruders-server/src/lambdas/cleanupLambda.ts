@@ -34,7 +34,7 @@ export const handler: Handler = async () => {
     };
     for (const gameItem of gameItems) {
         const currentDate = new Date().getTime();
-        if (currentDate - gameItem.creationTime > DAY && !gameItem.finished) {
+        if (currentDate - gameItem.creationTime > DAY) {
             const [, gameId] = gameItem.key.split('$');
             await cleanupGame(gameId, gameItems.filter(item => item.gameId === gameId) as any);
         }

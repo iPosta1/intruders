@@ -14,6 +14,7 @@ export type PlayerItemProps = {
     showRoles: boolean,
     gameState: GameStateResponse,
     mutateGame: KeyedMutator<GameStateResponse>,
+    itemWidth?: number,
 };
 
 export const PlayerItem = ({
@@ -22,7 +23,8 @@ export const PlayerItem = ({
     name,
     showRoles,
     gameState,
-    mutateGame
+    mutateGame,
+    itemWidth = 88,
 }: PlayerItemProps) => {
     const playerNumber = Number(playerIndex);
     const playerIsSelected = gameState.missions[gameState.mission]?.preSelectedPlayers.includes(playerNumber);
@@ -49,7 +51,9 @@ export const PlayerItem = ({
     }
 
     return (<TouchableOpacity
-        style={{ ...styles.playerItem, borderWidth: gameState.playerIndex === playerNumber ? 4 : 1 }}
+        accessibilityRole="button"
+        accessibilityLabel={`Player ${name}${gameState.leader === playerNumber ? ', leader' : ''}${playerIsSelected ? ', selected' : ''}`}
+        style={[styles.playerItem, { width: itemWidth }, gameState.playerIndex === playerNumber && styles.currentPlayer]}
         onPress={playerIsSelected ? () => onRemovePlayer(playerNumber) : () => onSelectPlayer(playerNumber)}
         key={playerNumber}>
         {!showRoles &&
@@ -74,17 +78,23 @@ const styles = StyleSheet.create({
         alignContent: "center",
         justifyContent: 'center',
         alignItems: 'center',
-        margin: 3,
-        width: 80,
-        height: 55,
+        margin: 2,
+        minWidth: 0,
+        height: 58,
         borderColor: colors.greenDigital,
         shadowColor: colors.greenDigital,
         shadowOffset: { width: 1, height: 1 },
         shadowRadius: 1,
     },
+    currentPlayer: {
+        borderWidth: 3,
+        borderColor: colors.phosphorBright,
+        backgroundColor: 'rgba(87, 255, 132, 0.08)',
+    },
     playerItemName: {
         color: '#81e35c',
-        fontSize: 10,
+        fontFamily: 'basic',
+        fontSize: 14,
         textAlign: 'center',
         flexWrap: 'nowrap',
     },

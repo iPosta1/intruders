@@ -1,17 +1,18 @@
 import { Background } from "../components/background"
 import React from "react";
-import { Dimensions, StyleSheet, View } from "react-native";
+import { StyleSheet, View, useWindowDimensions } from "react-native";
 import { GradientPanel } from "../components/shared/gradientPanel";
 import { ComputerScreen } from "../components/shared/computerScreen";
 import { AnimatedUFO } from "../components/shared/animatedUFO";
 
 export const LoadingScreen = () => {
+    const { width } = useWindowDimensions();
     return (<Background>
         <View style={styles.outside}>
             <GradientPanel roundBottom roundTop marginTop={10} marginBottom={10}>
-                <ComputerScreen marginTop={10} marginBottom={10} width={Dimensions.get("screen").width - 40}>
+                <ComputerScreen marginTop={10} marginBottom={10} width="100%">
                     <View style={styles.screenAnimation}>
-                        <AnimatedUFO starLength={Dimensions.get("screen").width / 2 - 10} customText='LOADING' />
+                        <AnimatedUFO starLength={width / 2 - 10} customText='SYSTEM BUSY' />
                     </View>
 
                 </ComputerScreen>

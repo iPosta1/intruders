@@ -1,7 +1,7 @@
-import { Dimensions, StyleSheet, Text, View } from "react-native";
-import { GameStateResponse, MISSION_ACTION, MISSION_STATUS } from "../../types/gameServerTypes";
+import { StyleSheet, Text, View } from "react-native";
+import { GameStateResponse, MISSION_ACTION } from "../../types/gameServerTypes";
 import { colors } from "../../utils/constants";
-import { getGameSpecifications, getMissionSpecification } from "../../utils/game";
+import { getGameSpecifications } from "../../utils/game";
 
 export const MissionItem = ({ missionNumber, gameState }: {
     missionNumber: number,
@@ -10,25 +10,33 @@ export const MissionItem = ({ missionNumber, gameState }: {
     gameState: GameStateResponse,
 }) => {
     const gameSpec = getGameSpecifications(Object.keys(gameState.players).length);
+    const missionSpec = gameSpec.missions[missionNumber];
+    const needsTwoFails = missionSpec?.fails > 1;
     return (
         <View style={styles.missionItem}>
-            <Text style={styles.missionNameText} >{`Mission ${missionNumber}`}</Text>
-            <View style={{ ...styles.missionItemCircle, width: Dimensions.get("screen").width <= 280 ? 40 : 50 }}>
-                <View style={styles.numberOfFails}>
-                    {gameSpec.missions[missionNumber]?.fails > 1 &&
-                        <Text style={styles.numberOfFailsText}>{`${gameSpec.missions[missionNumber]?.fails} fails`}</Text>
-                    }
-                </View>
-                <Text style={{ ...styles.missionNameText, fontSize: 20 }}>{gameSpec.missions[missionNumber]?.players}</Text>
+            <Text style={styles.missionNameText}>{`M${missionNumber}`}</Text>
+            <View style={[styles.missionItemCircle, needsTwoFails && styles.twoFailMission]}>
+                <Text style={styles.playerCount}>{missionSpec?.players}</Text>
+                {needsTwoFails && (
+                    <View style={styles.failureBadge}>
+                        <Text style={styles.failureBadgeText}>{`${missionSpec.fails}× FAIL`}</Text>
+                    </View>
+                )}
             </View>
             <View style={styles.missionActionsContainer}>
-                {gameState.missions[missionNumber]?.missionActions?.map(action => (
-                    <View style={{ ...styles.actionItem, borderColor: action === MISSION_ACTION.FAIL ? colors.red : colors.greenDigital }}>
-                        <Text style={{ ...styles.actionText, color: action === MISSION_ACTION.FAIL ? colors.red : colors.greenDigital }}>{
-                            action === MISSION_ACTION.FAIL ? 'X' : (action === MISSION_ACTION.SUCCESS ? '✓' : '?')
-                        }</Text>
-                    </View>
-                ))}
+                {gameState.missions[missionNumber]?.missionActions?.map((action, index) => {
+                    const isFailure = action === MISSION_ACTION.FAIL;
+                    return (
+                        <View
+                            key={`${missionNumber}-${index}`}
+                            style={{ ...styles.actionItem, borderColor: isFailure ? colors.red : colors.greenDigital }}
+                        >
+                            <Text style={{ ...styles.actionText, color: isFailure ? colors.red : colors.greenDigital }}>
+                                {isFailure ? "X" : action === MISSION_ACTION.SUCCESS ? "OK" : "?"}
+                            </Text>
+                        </View>
+                    );
+                })}
             </View>
         </View>
     );
@@ -37,57 +45,78 @@ export const MissionItem = ({ missionNumber, gameState }: {
 const styles = StyleSheet.create({
     missionItem: {
         alignContent: "center",
-        justifyContent: 'center',
-        alignItems: 'center',
+        justifyContent: "center",
+        alignItems: "center",
         width: 50,
-        height: 60,
+        height: 72,
         flex: 1,
     },
     missionItemCircle: {
         alignContent: "center",
-        justifyContent: 'center',
-        alignItems: 'center',
-        width: 50,
-        height: 35,
+        justifyContent: "center",
+        alignItems: "center",
+        width: '88%',
+        maxWidth: 56,
+        minWidth: 42,
+        height: 40,
         borderWidth: 1,
         borderColor: colors.greenDigital,
         marginTop: 2,
     },
     missionNameText: {
         color: colors.greenDigital,
-        fontSize: 8,
-        textAlign: 'center',
+        fontSize: 13,
+        fontFamily: "basic",
+        textAlign: "center",
     },
-    numberOfFails: {
-        position: "absolute",
-        top: 0,
-        marginTop: 0,
+    twoFailMission: {
+        borderColor: colors.amber,
     },
-    numberOfFailsText: {
+    playerCount: {
         color: colors.greenDigital,
+        fontSize: 19,
+        fontFamily: "title",
+        textAlign: "center",
+    },
+    failureBadge: {
+        position: "absolute",
+        left: 2,
+        right: 2,
+        bottom: 2,
+        height: 12,
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: colors.screenDeep,
+        borderTopWidth: 1,
+        borderTopColor: colors.amber,
+    },
+    failureBadgeText: {
+        color: colors.amber,
+        fontFamily: "basic",
         fontSize: 8,
+        lineHeight: 10,
+        letterSpacing: 0.3,
     },
     missionActionsContainer: {
-        flexDirection: 'row',
+        flexDirection: "row",
         alignContent: "center",
-        justifyContent: 'center',
-        alignItems: 'center',
+        justifyContent: "center",
+        alignItems: "center",
         marginTop: 2,
-        width: 40,
-        height: 12,
+        width: 50,
+        height: 18,
     },
     actionItem: {
-        width: 8,
-        height: 12,
+        minWidth: 18,
+        height: 18,
         borderWidth: 1,
-        borderColor: colors.greenDigital,
         alignContent: "center",
-        justifyContent: 'center',
-        alignItems: 'center',
+        justifyContent: "center",
+        alignItems: "center",
     },
     actionText: {
-        color: colors.greenDigital,
-        fontSize: 8,
-        textAlign: 'center',
+        fontSize: 11,
+        fontFamily: "title",
+        textAlign: "center",
     },
 });

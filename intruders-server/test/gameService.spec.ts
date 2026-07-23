@@ -272,7 +272,7 @@ describe('Game service tests', () => {
         expect(gameDAO.deleteGameItems).toHaveBeenCalledWith("idqz");
     });
 
-    it('Should do nothing when somebody leaves a game and the game is finished', async () => {
+    it('Should remove the player when they leave a finished game', async () => {
         gameDAO.getGameItems.mockResolvedValue(Promise.resolve([
             {
                 key: `game$gameId`,
@@ -291,7 +291,7 @@ describe('Game service tests', () => {
         gameDAO.deletePlayer.mockResolvedValue(Promise.resolve());
         await new GameService(userId, defaultUserName, gameDAO).processRequest(GAME_ACTIONS.LEAVE_GAME, {gameId: 'idqz'});
         expect(gameDAO.deleteGameItems).not.toHaveBeenCalled();
-        expect(gameDAO.deletePlayer).not.toHaveBeenCalled();
+        expect(gameDAO.deletePlayer).toHaveBeenCalledWith('idqz', userId);
     });
 
     //CHANGE_NAME tests
@@ -319,18 +319,17 @@ describe('Game service tests', () => {
         expect(gameDAO.changeName).not.toHaveBeenCalled();
     });
 
-    it('Should throw error on changing name when the game is already started', async () => {
+    it('Should change name when the game is already started', async () => {
         gameDAO.getGame.mockResolvedValue(Promise.resolve({
             gameId: 'idqz',
             status: GAME_STATUS.WAITING_LEADER_TO_SELECT_PLAYERS,
         } as any));
         gameDAO.changeName.mockResolvedValue(Promise.resolve());
-        try {
-            await new GameService(userId, defaultUserName, gameDAO).processRequest(GAME_ACTIONS.CHANGE_NAME, {gameId: 'idqz', newName: 'loh'});
-        } catch (e) {
-            expect((e as any).message).toBe('Cannot change name when the game has already started');
-        }
-        expect(gameDAO.changeName).not.toHaveBeenCalled();
+        await new GameService(userId, defaultUserName, gameDAO).processRequest(
+            GAME_ACTIONS.CHANGE_NAME,
+            {gameId: 'idqz', newName: 'loh'},
+        );
+        expect(gameDAO.changeName).toHaveBeenCalledWith('idqz', userId, 'loh');
     });
 
     //CHANGE_NAME tests

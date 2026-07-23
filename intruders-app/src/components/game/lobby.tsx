@@ -1,14 +1,13 @@
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import React, { useRef, useState } from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View, Share, Dimensions, TextInput, ActivityIndicator } from "react-native";
+import React, { useState } from "react";
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View, Share, useWindowDimensions } from "react-native";
 import { RootStackParamList } from "../../../App";
 import { GameStateResponse } from "../../types/gameServerTypes";
 import { Background } from "../background";
 import { QRCodeSVG } from 'qrcode.react';
 import { AppContext, HOST } from "../../context";
-import { useGameStatus } from "../../services/gameService";
-import { DELETE, POST, PUT, ServerResponse } from "../../utils/fetch";
+import { DELETE, POST } from "../../utils/fetch";
 import { KeyedMutator } from "swr";
 import { colors } from "../../utils/constants";
 import { LoadingScreen } from "../../screens/LoadingScreen";
@@ -16,65 +15,17 @@ import { GradientPanel } from "../shared/gradientPanel";
 import { ComputerScreen } from "../shared/computerScreen";
 import { AnimatedCursor } from "../shared/animatedCursor";
 import { GameButton } from "../shared/gameButton";
-import { crownIcon, pencilIcon } from "../icons";
+import { crownIcon } from "../icons";
 
-const NameTextInput = ({ initialValue, onSubmit, onNameChanged, gameState, mutate }: {
-    initialValue: string,
-    onSubmit: () => void,
-    onNameChanged: (name: string) => void,
+export const Lobby = ({ gameState, mutate }: {
     gameState: GameStateResponse,
     mutate: KeyedMutator<GameStateResponse>,
 }) => {
-    const [nameValue, setNameValue] = useState(null);
-    const [isLoading, setIsLoading] = useState(false);
-
-    return (
-        <View style={styles.inputContainer}>
-            <View style={styles.inputInput}>
-                <TextInput
-                    autoFocus={true}
-                    maxLength={16}
-                    style={styles.inputStyle}
-                    value={nameValue}
-                    defaultValue={nameValue}
-                    onChangeText={setNameValue}
-                />
-            </View>
-            <View style={styles.inputButton}>
-                {!isLoading &&
-                    <TouchableOpacity onPress={() => {
-                        setIsLoading(true);
-                        PUT('/change-name', { newName: nameValue || initialValue, gameId: gameState.gameId }).then((resp) => {
-                            setIsLoading(false);
-                            if (!!resp.ok) {
-                                const updatedName = nameValue || initialValue;
-                                gameState.players[gameState.playerIndex].name = updatedName;
-                                onNameChanged(updatedName);
-                                mutate(gameState);
-                            }
-                            onSubmit();
-                        });
-                    }}>
-                        <Text style={styles.inputOk}>OK</Text>
-                    </TouchableOpacity>
-                }
-                {isLoading &&
-                    <ActivityIndicator size="small" color={colors.greenDigital} style={{ marginLeft: -7 }} />
-                }
-            </View>
-
-
-        </View>
-    );
-};
-
-export const Lobby = ({ gameState }: { gameState: GameStateResponse }) => {
+    const { width, height } = useWindowDimensions();
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
     const gameLink = `${HOST}/join/${gameState.gameId}`;
-    const { player, setPlayerName } = React.useContext(AppContext);
-    const [isNameEdited, setIsNameEdited] = useState(false);
+    const { player } = React.useContext(AppContext);
     const [isLoading, setIsLoading] = useState(false);
-    const { mutate } = useGameStatus(gameState.gameId, player?.id);
     const userIsAGameOwner = gameState.creator === player?.id;
     const canStartTheGame = !!userIsAGameOwner && Object.keys(gameState.players).length > 4;
 
@@ -118,9 +69,9 @@ export const Lobby = ({ gameState }: { gameState: GameStateResponse }) => {
     return (<Background>
         {
             !!isLoading ? <LoadingScreen /> :
-                <View style={styles.outside}>
-                    <GradientPanel roundBottom roundTop marginTop={10} marginBottom={10}>
-                        <ComputerScreen width={Dimensions.get("screen").width - 40} marginTop={10} maxWidth={480} maxHeight={400}>
+                <ScrollView contentContainerStyle={styles.outside}>
+                    <GradientPanel height={Math.max(650, Math.min(820, height - 20))} roundBottom roundTop marginTop={10} marginBottom={10}>
+                        <ComputerScreen width="100%" height={Math.max(235, Math.min(300, height * 0.34))} marginTop={8} maxWidth={520}>
                             <View style={styles.titleContainer}>
                                 <Text style={styles.titleText}>Waiting for players to join</Text>
                                 <Text style={styles.titleCodeText}>{`Game code: `}
@@ -132,7 +83,7 @@ export const Lobby = ({ gameState }: { gameState: GameStateResponse }) => {
                                 <QRCodeSVG value={gameLink} bgColor={colors.screenColor} fgColor={colors.greenDigital} />
                             </View>
                         </ComputerScreen>
-                        <ComputerScreen width={Dimensions.get("screen").width - 40} marginTop={10} maxWidth={480}>
+                        <ComputerScreen width="100%" height={Math.max(230, Math.min(270, height * 0.3))} marginTop={8} maxWidth={520}>
                             <View style={styles.playerContainer}>
                                 {
                                     Array.from({ length: 5 }, (val, index) => index + 1).map(val => {
@@ -155,26 +106,10 @@ export const Lobby = ({ gameState }: { gameState: GameStateResponse }) => {
                                                                     {gameState.players[index].name}
                                                                 </Text> : <Text style={{ ...styles.playerText, opacity: 0.3 }}>empty</Text>)
                                                         }
-                                                        {!!isUserPlayer &&
-                                                            (!!isNameEdited ?
-                                                                <NameTextInput
-                                                                    onSubmit={() => setIsNameEdited(false)}
-                                                                    onNameChanged={setPlayerName}
-                                                                    initialValue={gameState.players[index]?.name}
-                                                                    gameState={gameState}
-                                                                    mutate={mutate}
-                                                                /> : <Text style={styles.playerText} numberOfLines={1}>
-                                                                    {gameState.players[index]?.name}
-                                                                </Text>)
-                                                        }
+                                                        {!!isUserPlayer && <Text style={styles.playerText} numberOfLines={1}>
+                                                            {gameState.players[index]?.name}
+                                                        </Text>}
                                                     </View>
-                                                    {
-                                                        isUserPlayer && !isNameEdited &&
-                                                        <TouchableOpacity onPress={() => setIsNameEdited(true)}>
-                                                            <Image source={pencilIcon}
-                                                                style={{ height: 15, width: 15, tintColor: colors.greenDigital, marginRight: 3 }}></Image>
-                                                        </TouchableOpacity>
-                                                    }
                                                     {
                                                         !isUserPlayer && userIsAGameOwner && !!gameState.players[index]?.id &&
                                                         <TouchableOpacity onPress={() => onRemovePlayer(gameState.players[index]?.id)}>
@@ -200,7 +135,7 @@ export const Lobby = ({ gameState }: { gameState: GameStateResponse }) => {
                             <GameButton labelBottom="Start the game" isEnabled={canStartTheGame} color={colors.greenDigital} size={50} onPress={() => onStartGame()} />
                         </View>
                     </GradientPanel>
-                </View>
+                </ScrollView>
         }
     </Background>);
 }
@@ -210,7 +145,8 @@ const styles = StyleSheet.create({
         alignContent: "center",
         justifyContent: 'center',
         alignItems: 'center',
-        flex: 1,
+        flexGrow: 1,
+        paddingHorizontal: 9,
     },
     playerContainer: {
         alignContent: "center",
@@ -236,12 +172,13 @@ const styles = StyleSheet.create({
     titleText: {
         color: colors.greenDigital,
         fontFamily: 'title',
-        fontSize: 16,
+        fontSize: 18,
+        letterSpacing: 1,
     },
     titleCodeText: {
         color: colors.greenDigital,
         fontFamily: 'title',
-        fontSize: 12,
+        fontSize: 13,
         textAlign: 'center'
     },
     titleCode: {
@@ -278,12 +215,13 @@ const styles = StyleSheet.create({
         borderColor: colors.greenDigital,
     },
     buttonsContainer: {
-        height: 60,
+        minHeight: 86,
+        width: "100%",
         flexDirection: 'row',
         justifyContent: 'space-around',
         alignContent: "center",
         alignItems: "center",
-        marginBottom: 10,
+        marginBottom: 4,
         marginTop: 5,
     },
     nameContainer: {
@@ -296,47 +234,18 @@ const styles = StyleSheet.create({
     playerText: {
         color: colors.greenDigital,
         fontFamily: 'title',
-        fontSize: 10,
+        fontSize: 14,
+        letterSpacing: 0.4,
         marginLeft: 3,
     },
     close: {
         fontFamily: 'title',
         color: colors.greenDigital,
         fontWeight: 'bold',
-        fontSize: 12,
+        fontSize: 13,
         textAlign: 'center',
         marginLeft: 5,
         marginRight: 3,
     },
 
-    inputContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        flex: 1,
-    },
-    inputButton: {
-        width: 30,
-        alignItems: 'flex-end',
-        marginRight: 3,
-    },
-    inputInput: {
-        flex: 1,
-    },
-    inputStyle: {
-        marginLeft: 3,
-        color: colors.greenDigital,
-        fontSize: 12,
-        textAlign: 'left',
-        flex: 1,
-        alignItems: 'stretch'
-    },
-    inputOk: {
-        fontFamily: 'title',
-        fontWeight: 'bold',
-        color: colors.greenDigital,
-        fontSize: 12,
-        textAlign: 'left',
-        marginLeft: 3,
-        marginTop: 3,
-    }
 });

@@ -1,157 +1,104 @@
-import React, { ReactNode, useState } from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { colors, dimensions } from "../../utils/constants";
-import { blurIcon } from "../icons";
-import { Gradient } from "./gradient";
+import React, { ReactNode } from 'react';
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { colors } from '../../utils/constants';
 
-const BlurLight = ({ size, color }: { size: number, color: string }) =>
-    (<Image source={blurIcon} style={{ height: size, width: size, tintColor: color }}></Image>);
-
-type GameButtonProps = {
-    size: number,
-    labelSize?: number,
-    color: string,
-    isEnabled?: boolean,
-    onPress?: () => void,
-    onPressIn?: () => void,
-    onPressOut?: () => void,
-    round?: boolean,
-    labelBottom?: string,
-    indicator?: boolean,
+type Props = {
+    size: number;
+    labelSize?: number;
+    color: string;
+    isEnabled?: boolean;
+    onPress?: () => void;
+    onPressIn?: () => void;
+    onPressOut?: () => void;
+    round?: boolean;
+    labelBottom?: string;
+    indicator?: boolean;
 };
 
-export const GameButtonGroup = ({ children }: { children: Array<ReactNode> | ReactNode }) => {
-    return (<View>
-        <Gradient
-            colors={[colors.gray4, colors.gray2]}
-            style={styles.gradientStyle}
-        >
-            {children}
-        </Gradient>
-    </View>);
-}
+export const GameButtonGroup = ({ children }: { children: ReactNode }) => (
+    <View style={styles.group}>{children}</View>
+);
 
-export const GameButton = ({ size, color, isEnabled, onPress, onPressIn, onPressOut, round, labelBottom, indicator, labelSize }: GameButtonProps) => {
-    const buttonLabelSize = labelSize || (size <= 30 ? dimensions.smallTextMinimum : dimensions.smallTextMaximum);
+export const GameButton = ({ size, color, isEnabled = false, onPress, onPressIn, onPressOut, round, labelBottom, labelSize }: Props) => {
+    const { width } = useWindowDimensions();
+    const responsiveLabel = labelSize || Math.max(11, Math.min(13, width / 32));
+    const interactive = isEnabled && !!(onPress || onPressIn || onPressOut);
 
-    const [numberOfClicks, setNumberOfClicks] = useState(0);
-
-    return (<View style={{ ...styles.outerBG, width: size, height: size + 10 }}>
-        <Gradient
-            colors={indicator ? [colors.gray2, colors.gray1] : [colors.gray3, colors.black]}
-            style={{
-                ...styles.gradientStyleOutside, width: size, height: size,
-                borderRadius: round ? 100 : styles.gradientStyleOutside.borderRadius
-            }}
-        >
-            {
-                isEnabled &&
-                <View style={{ ...styles.light, width: size / 2, height: size / 2 }}><BlurLight size={size * 1.6} color={color} /></View>
-            }
-            {
-                isEnabled &&
-                <View style={{ ...styles.light, width: size / 2, height: size / 2 }}><BlurLight size={size * 1.2} color={color} /></View>
-            }
-            {
-                (!!onPress || !!onPressIn || !!onPressOut) && isEnabled ?
-                    <TouchableOpacity onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut}
-                        style={{
-                            ...styles.buttonOuter,
-                            width: size - 8,
-                            height: size - 8,
+    return (
+        <View style={[styles.wrapper, { width: Math.max(size, 58) }]}>
+            <LinearGradient colors={['#495149', '#101410', '#030403']} style={[styles.socket, { width: size, height: size, borderRadius: round ? size : 9 }]}>
+                <Pressable
+                    accessibilityRole={interactive ? 'button' : undefined}
+                    accessibilityLabel={labelBottom}
+                    disabled={!interactive}
+                    onPress={onPress}
+                    onPressIn={onPressIn}
+                    onPressOut={onPressOut}
+                    style={({ pressed }) => [
+                        styles.button,
+                        {
+                            width: size - 10,
+                            height: size - 10,
+                            borderRadius: round ? size : 5,
                             backgroundColor: color,
-                            borderRadius: round ? 100 : styles.buttonOuter.borderRadius
-                        }}>
-                        <View style={{
-                            ...styles.buttonInner,
-                            width: size - 12,
-                            height: size - 12,
-                            backgroundColor: color,
-                            borderRadius: round ? 100 : styles.buttonInner.borderRadius
-                        }}>
-                        </View>
-                    </TouchableOpacity> :
-                    <View style={{
-                        ...styles.buttonOuter,
-                        width: size - 8,
-                        height: size - 8,
-                        backgroundColor: color,
-                        borderRadius: round ? 100 : styles.buttonOuter.borderRadius
-                    }}>
-                        <View style={{
-                            ...styles.buttonInner,
-                            width: size - 12,
-                            height: size - 12,
-                            backgroundColor: color,
-                            borderRadius: round ? 100 : styles.buttonInner.borderRadius
-                        }}>
-                        </View>
-                    </View>
-            }
-        </Gradient>
-        {!!labelBottom &&
-            <Text style={{ ...styles.labelText, fontSize: buttonLabelSize }}>{labelBottom}</Text>
-        }
-    </View>);
-}
+                            opacity: isEnabled ? 0.96 : 0.2,
+                            transform: [{ translateY: pressed ? 2 : 0 }],
+                            shadowColor: isEnabled ? color : '#000',
+                            shadowOpacity: isEnabled ? 0.65 : 0.15,
+                        },
+                    ]}
+                >
+                    <View style={[styles.gloss, { borderRadius: round ? size : 4 }]} />
+                </Pressable>
+            </LinearGradient>
+            {!!labelBottom && <Text numberOfLines={2} style={[styles.label, { fontSize: responsiveLabel }]}>{labelBottom.toUpperCase()}</Text>}
+        </View>
+    );
+};
 
 const styles = StyleSheet.create({
-    outerBG: {
-        flex: 1,
-        alignContent: "center",
-        justifyContent: "flex-start",
-        alignItems: "center",
-        marginHorizontal: 3,
-    },
-    gradientStyleOutside: {
-        borderRadius: 7,
-        borderWidth: 1,
-        borderTopColor: colors.gray2,
-        borderBottomColor: colors.lightGray2,
-        borderLeftColor: colors.gray2,
-        borderRightColor: colors.lightGray2,
-        alignContent: "center",
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    buttonOuter: {
-        borderRadius: 3,
-        alignContent: "center",
-        justifyContent: "center",
-        alignItems: "center",
-        opacity: 0.4,
-    },
-    buttonInner: {
-        borderRadius: 2,
-        alignContent: "center",
-        justifyContent: "center",
-        alignItems: "center",
-        shadowColor: colors.blackTransparent,
-        shadowOffset: { width: 2, height: 2 },
-        shadowRadius: 5,
-        opacity: 1,
-    },
-    light: {
-        position: "absolute",
-        alignContent: "center",
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    labelText: {
-        color: colors.lightGray1,
-        textAlign: 'center'
-    },
-    gradientStyle: {
-        borderRadius: dimensions.radiusSmall,
-        borderColor: colors.gray1,
-        shadowColor: colors.gray1,
-        shadowOffset: { width: 1, height: 1 },
-        padding: 5,
-        paddingBottom: 8,
+    wrapper: { alignItems: 'center', marginHorizontal: 4, marginBottom: 7 },
+    group: {
         flexDirection: 'row',
-        alignContent: "center",
-        justifyContent: "center",
-        alignItems: "center",
+        padding: 5,
         marginHorizontal: 3,
-    }
+        borderRadius: 11,
+        backgroundColor: '#141914',
+        borderTopWidth: 1,
+        borderTopColor: '#4d574e',
+        borderBottomWidth: 2,
+        borderBottomColor: '#030403',
+    },
+    socket: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderTopColor: '#737b70',
+        borderBottomColor: '#000',
+    },
+    button: {
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderTopColor: 'rgba(255,255,255,0.65)',
+        borderBottomColor: 'rgba(0,0,0,0.75)',
+        shadowRadius: 9,
+        elevation: 5,
+    },
+    gloss: {
+        width: '86%',
+        height: '42%',
+        marginTop: 2,
+        backgroundColor: 'rgba(255,255,255,0.24)',
+    },
+    label: {
+        minHeight: 23,
+        marginTop: 5,
+        color: colors.phosphorBright,
+        fontFamily: 'basic',
+        letterSpacing: 0.7,
+        textAlign: 'center',
+    },
 });

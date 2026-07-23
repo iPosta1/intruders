@@ -9,7 +9,7 @@ export type ServerResponse = {
     data?: any,
 };
 
-const makeRequest = async (path: string, type: string, body?: object): Promise<ServerResponse> => {
+const makeRequest = async (path: string, type: string, body?: object, silent = false): Promise<ServerResponse> => {
     const player = loadPlayerIdentity();
     if (!player) {
         return { ok: false };
@@ -33,7 +33,7 @@ const makeRequest = async (path: string, type: string, body?: object): Promise<S
         };
     } else {
         const msg = await fetchResponse.text();
-        Toast.show(parseError(msg), {
+        if (!silent) Toast.show(parseError(msg), {
             duration: Toast.durations.LONG,
             animation: true,
             hideOnPress: true,
@@ -58,8 +58,8 @@ const makeRequest = async (path: string, type: string, body?: object): Promise<S
     }
 }
 
-export const GET = async (path: string) => {
-    return makeRequest(path, 'GET');
+export const GET = async (path: string, options?: { silent?: boolean }) => {
+    return makeRequest(path, 'GET', undefined, options?.silent);
 }
 
 export const DELETE = async (path: string) => {

@@ -3,9 +3,9 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { useFonts } from 'expo-font';
 import { useEffect, useState } from 'react';
 import { RootSiblingParent } from 'react-native-root-siblings';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppContext } from './src/context';
 import { loadPlayerIdentity, PlayerIdentity, savePlayerName, clearPlayerName } from './src/services/playerIdentity';
-import { GET } from './src/utils/fetch';
 import { GameScreen } from './src/screens/GameScreen';
 import { JoinScreen } from './src/screens/JoinScreen';
 import { LoadingScreen } from './src/screens/LoadingScreen';
@@ -37,38 +37,26 @@ const linking: LinkingOptions<RootStackParamList> = {
 const Stack = createStackNavigator<RootStackParamList, undefined>();
 
 export default function App() {
-    const isGamePage = window.location.pathname.startsWith('/game/');
-    useFonts({
+    const [fontsLoaded] = useFonts({
         basic: require('./assets/fonts/digital0.ttf'),
         title: require('./assets/fonts/digital.ttf'),
     });
 
     const [player, setPlayer] = useState<PlayerIdentity | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [gameId, setGameId] = useState<string>(null);
 
     useEffect(() => {
         setPlayer(loadPlayerIdentity());
         setIsLoading(false);
     }, []);
 
-    useEffect(() => {
-        if (!isGamePage && player) {
-            setIsLoading(true);
-            GET('/find-game')
-                .then(status => setGameId(status.ok ? status.data?.gameId || null : null))
-                .finally(() => setIsLoading(false));
-        }
-    }, [player]);
-
     const updatePlayerName = (name: string) => setPlayer(savePlayerName(name));
     const forgetPlayerName = () => {
         clearPlayerName();
         setPlayer(null);
-        setGameId(null);
     };
 
-    if (isLoading) {
+    if (isLoading || !fontsLoaded) {
         return (
             <NavigationContainer>
                 <Stack.Navigator id={undefined} screenOptions={{ headerShown: false }}>
@@ -79,7 +67,8 @@ export default function App() {
     }
 
     return (
-        <AppContext.Provider value={{ player, setPlayerName: updatePlayerName, clearPlayerName: forgetPlayerName }}>
+        <SafeAreaProvider>
+          <AppContext.Provider value={{ player, setPlayerName: updatePlayerName, clearPlayerName: forgetPlayerName }}>
             <RootSiblingParent>
                 {!player ? (
                     <NavigationContainer>
@@ -91,7 +80,7 @@ export default function App() {
                     <NavigationContainer linking={linking}>
                         <Stack.Navigator
                             id={undefined}
-                            initialRouteName={isGamePage || gameId ? 'GameScreen' : 'MainScreen'}
+                            initialRouteName="MainScreen"
                             screenOptions={{ headerShown: false }}
                         >
                             <Stack.Screen name="MainScreen" component={MainScreen} options={{ title: 'Main' }} />
@@ -99,7 +88,6 @@ export default function App() {
                                 name="GameScreen"
                                 component={GameScreen}
                                 options={{ title: 'Game' }}
-                                initialParams={gameId ? { gameId } : undefined}
                             />
                             <Stack.Screen name="SettingsScreen" component={SettingsScreen} options={{ title: 'Settings' }} />
                             <Stack.Screen name="JoinScreen" component={JoinScreen} options={{ title: 'Join Game' }} />
@@ -107,6 +95,7 @@ export default function App() {
                     </NavigationContainer>
                 )}
             </RootSiblingParent>
-        </AppContext.Provider>
+          </AppContext.Provider>
+        </SafeAreaProvider>
     );
 }

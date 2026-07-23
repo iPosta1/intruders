@@ -1,7 +1,7 @@
 import { GameStateResponse, MISSION_STATUS, ROLE } from "../types/gameServerTypes";
-import React from "react";
+import React, { useState } from "react";
 import { Background } from "./background";
-import { Dimensions, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { GradientPanel } from "./shared/gradientPanel";
 import { ComputerScreen } from "./shared/computerScreen";
 import { colors } from "../utils/constants";
@@ -10,20 +10,39 @@ import { AnimatedCursor } from "./shared/animatedCursor";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../../App";
+import { DELETE } from "../utils/fetch";
+import { LoadingScreen } from "../screens/LoadingScreen";
 
 export const GameResult = ({ gameState }: { gameState: GameStateResponse }) => {
 
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+    const { height } = useWindowDimensions();
+    const [isLeaving, setIsLeaving] = useState(false);
+    const winner = gameState.finished.winner === ROLE.SPY ? 'ALIEN SPIES' : 'HUMAN RESISTANCE';
+
+    const exitResult = async () => {
+        if (isLeaving) return;
+        setIsLeaving(true);
+        const response = await DELETE(`/leave-game/${gameState.gameId}`);
+        if (response.ok) {
+            navigation.reset({ index: 0, routes: [{ name: 'MainScreen' }] });
+            return;
+        }
+        setIsLeaving(false);
+    };
+
+    if (isLeaving) return <LoadingScreen />;
+
     return (
         <Background>
-            <View style={styles.container}>
-                <GradientPanel marginTop={5} marginBottom={5} roundTop roundBottom>
-                    <ComputerScreen width={Dimensions.get("screen").width - 40} marginTop={10} marginBottom={20} maxWidth={480}>
+            <ScrollView contentContainerStyle={styles.container}>
+                <GradientPanel height={Math.max(620, Math.min(820, height - 18))} marginTop={5} marginBottom={5} roundTop roundBottom>
+                    <ComputerScreen width="100%" height={Math.max(480, Math.min(650, height - 150))} marginTop={8} marginBottom={12} maxWidth={520}>
                         <View style={styles.screenContainer}>
                             <View style={styles.screenItem}>
                                 <View style={styles.screenItem}>
                                     <View style={styles.screenItemRow}>
-                                        <Text style={styles.textStyle}>{`Winner: ${gameState.finished.winner}`}</Text>
+                                        <Text style={styles.winnerText}>{`${winner} WIN`}</Text>
                                         <AnimatedCursor />
                                     </View>
                                 </View>
@@ -31,7 +50,7 @@ export const GameResult = ({ gameState }: { gameState: GameStateResponse }) => {
                                     <Text style={styles.textStyle}>Missions:</Text>
                                     {Object.keys(gameState.finished.missions).map(missionNumber =>
                                     (
-                                        <View style={{
+                                        <View key={missionNumber} style={{
                                             ...styles.missionStatus,
                                             borderColor: gameState.finished.missions[missionNumber] === MISSION_STATUS.MISSION_FAILED ?
                                                 colors.red : colors.greenDigital
@@ -46,7 +65,7 @@ export const GameResult = ({ gameState }: { gameState: GameStateResponse }) => {
                                 <View style={styles.screenItem}>
                                     <Text style={styles.textStyle}>Players:</Text>
                                     {Object.keys(gameState.finished.players).map(playerName =>
-                                    (<View style={styles.screenItemRow}>
+                                    (<View key={playerName} style={styles.screenItemRow}>
                                         <Text style={styles.textStyle}>{`${playerName}: `}</Text>
                                         <Text style={{
                                             ...styles.textStyle,
@@ -58,21 +77,21 @@ export const GameResult = ({ gameState }: { gameState: GameStateResponse }) => {
                         </View>
                     </ComputerScreen>
                     <View style={styles.button}>
-                        <GameButton labelBottom="Exit" size={50} labelSize={16} color={colors.pureWhite} isEnabled onPress={() =>
-                            navigation.navigate('MainScreen')} />
+                        <GameButton labelBottom="Exit results" size={50} labelSize={13} color={colors.amber} isEnabled onPress={exitResult} />
                     </View>
                 </GradientPanel>
-            </View>
+            </ScrollView>
         </Background>)
 }
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
+        flexGrow: 1,
         alignContent: "center",
         justifyContent: 'center',
         alignItems: 'center',
-        width: '100%'
+        width: '100%',
+        paddingHorizontal: 9,
     },
     button: {
         height: 100,
@@ -102,6 +121,13 @@ const styles = StyleSheet.create({
         fontFamily: 'title',
         fontSize: 12,
         textAlign: 'left'
+    },
+    winnerText: {
+        color: colors.phosphorBright,
+        fontFamily: 'title',
+        fontSize: 19,
+        letterSpacing: 1,
+        textAlign: 'center',
     },
     missionStatus: {
         width: 12,

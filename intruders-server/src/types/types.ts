@@ -49,6 +49,7 @@ export enum VOTE {
 export enum MISSION_ACTION {
     SUCCESS = 'SUCCESS',
     FAIL = 'FAIL',
+    UNKNOWN = 'UNKNOWN',
 }
 
 export interface MissionSpec {

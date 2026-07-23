@@ -1,7 +1,7 @@
-import { useIsFocused, useNavigation } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import React, { useState } from "react";
-import { Image, StyleSheet, Switch, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, TextInput, View } from "react-native";
 import { RootStackParamList } from "../../App";
 import { Background } from "../components/background";
 import { GameButton } from "../components/shared/gameButton";
@@ -10,16 +10,40 @@ import { LogoScreen } from "../components/shared/logoScreen";
 import { AppContext } from "../context";
 import { useUserGameId } from "../services/gameService";
 import { colors } from "../utils/constants";
-import { DELETE, GET } from "../utils/fetch";
+import { DELETE, PUT } from "../utils/fetch";
 import { LoadingScreen } from "./LoadingScreen";
 
 export const SettingsScreen = () => {
-    useIsFocused();
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-    const { player, clearPlayerName } = React.useContext(AppContext);
+    const { player, setPlayerName } = React.useContext(AppContext);
     const { data: status, mutate, isLoading: userGameIsLoading } = useUserGameId(player?.id);
-    mutate();
     const [isLoading, setIsLoading] = useState(false);
+    const [name, setName] = useState(player?.name || '');
+    const [saveMessage, setSaveMessage] = useState('');
+
+    const saveName = async () => {
+        const nextName = name.trim().substring(0, 16);
+        if (!nextName || nextName === player?.name || isLoading) return;
+        setSaveMessage('');
+        setIsLoading(true);
+        try {
+            if (status?.gameId) {
+                const response = await PUT('/change-name', { gameId: status.gameId, newName: nextName });
+                if (!response.ok) {
+                    setSaveMessage('NAME UPDATE FAILED — TRY AGAIN');
+                    return;
+                }
+            }
+            setPlayerName(nextName);
+            await mutate();
+            setName(nextName);
+            setSaveMessage('IDENTITY SAVED');
+        } catch {
+            setSaveMessage('CONNECTION LOST — NAME NOT CHANGED');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const leaveTheGame = async () => {
         setIsLoading(true);
@@ -27,31 +51,42 @@ export const SettingsScreen = () => {
         if (resp.ok) {
             mutate(null);
             setIsLoading(false);
-            navigation.navigate('MainScreen');
+            navigation.reset({ index: 0, routes: [{ name: 'MainScreen' }] });
         }
     }
 
     const navigateToDefault = async () => {
-        if (status?.ok && !!status?.gameId) {
-            navigation.navigate('GameScreen', { gameId: status.gameId });
+        if (status?.gameId) {
+            navigation.replace('GameScreen', { gameId: status.gameId });
         } else {
             navigation.navigate('MainScreen');
         }
     }
 
     return (<Background>
-        {isLoading || userGameIsLoading ? <LoadingScreen /> :
+        {userGameIsLoading ? <LoadingScreen /> :
             <View style={styles.outside}>
                 <GradientPanel roundBottom roundTop marginTop={10} marginBottom={10}>
                     <LogoScreen text="Settings" />
                     <View style={styles.menu}>
                         <View style={styles.optionsGroup}>
-                            <View style={styles.optionItemRow}>
-                                <View style={styles.optionItem}><Text style={styles.menuItemText}>Change player name</Text>
-                                    <Text style={styles.menuItemTextSmall}>{` (${player?.name})`}</Text></View>
-                                <View style={styles.optionItemButton}>
-                                    <GameButton size={50} color={colors.pureWhite} isEnabled onPress={clearPlayerName} />
-                                </View>
+                            <View style={styles.nameBlock}>
+                                <Text style={styles.menuItemText}>PLAYER IDENTITY</Text>
+                                <TextInput
+                                    value={name}
+                                    onChangeText={setName}
+                                    maxLength={16}
+                                    onSubmitEditing={saveName}
+                                    style={styles.nameInput}
+                                    placeholder="ENTER NAME"
+                                    placeholderTextColor={colors.lightGray2}
+                                />
+                                {!!saveMessage && <Text
+                                    accessibilityRole="alert"
+                                    style={[styles.saveMessage, saveMessage === 'IDENTITY SAVED' ? styles.saveSuccess : styles.saveError]}
+                                >{saveMessage}</Text>}
+                                <GameButton size={46} color={colors.greenDigital} isEnabled={!isLoading && !!name.trim() && name.trim() !== player?.name}
+                                    labelBottom={isLoading ? "Saving…" : "Save name"} labelSize={11} onPress={saveName} />
                             </View>
                             {!!status?.gameId &&
                                 <View style={styles.optionItemRow}>
@@ -129,6 +164,39 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         flex: 1,
+    },
+    nameBlock: {
+        width: '90%',
+        alignItems: 'center',
+        gap: 10,
+        paddingVertical: 16,
+    },
+    nameInput: {
+        width: '100%',
+        maxWidth: 300,
+        borderWidth: 1,
+        borderColor: colors.greenDigital,
+        backgroundColor: colors.screenColor,
+        color: colors.greenDigital,
+        fontFamily: 'title',
+        fontSize: 18,
+        letterSpacing: 1,
+        textAlign: 'center',
+        paddingVertical: 12,
+        paddingHorizontal: 14,
+    },
+    saveMessage: {
+        minHeight: 18,
+        fontFamily: 'basic',
+        fontSize: 13,
+        letterSpacing: 0.6,
+        textAlign: 'center',
+    },
+    saveSuccess: {
+        color: colors.greenDigital,
+    },
+    saveError: {
+        color: colors.red,
     },
     modalStyle: {
         width: '80%',

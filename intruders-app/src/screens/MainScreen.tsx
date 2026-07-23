@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { Background } from "../components/background";
 import { AppContext } from "../context";
 import {
@@ -16,14 +16,17 @@ import { useUserGameId } from "../services/gameService";
 import { LoadingScreen } from "./LoadingScreen";
 import { GradientPanel } from "../components/shared/gradientPanel";
 import { LogoScreen } from "../components/shared/logoScreen";
-import { GameButton, GameButtonGroup } from "../components/shared/gameButton";
+import { GameButton } from "../components/shared/gameButton";
 import { colors } from "../utils/constants";
+import { ComputerScreen } from "../components/shared/computerScreen";
 
 const CELL_COUNT = 4;
 
 export const MainScreen = () => {
-    useIsFocused();
+    const isFocused = useIsFocused();
     const { player } = React.useContext(AppContext);
+    const { width, height } = useWindowDimensions();
+    const cellSize = Math.max(36, Math.min(48, (width - 104) / 4));
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
     const [value, setValue] = useState('');
     const ref = useBlurOnFulfill({ value, cellCount: CELL_COUNT });
@@ -33,16 +36,21 @@ export const MainScreen = () => {
     });
     const [isLoading, setIsLoading] = useState(false);
     const { data: userGameStatus } = useUserGameId(player?.id);
+    const redirectedGameId = useRef<string | null>(null);
 
-    if (userGameStatus?.gameId) {
-        navigation.navigate('GameScreen', { gameId: userGameStatus.gameId } as any);
-    }
+    useEffect(() => {
+        const activeGameId = userGameStatus?.gameId;
+        if (isFocused && activeGameId && redirectedGameId.current !== activeGameId) {
+            redirectedGameId.current = activeGameId;
+            navigation.reset({ index: 0, routes: [{ name: 'GameScreen', params: { gameId: activeGameId } }] });
+        }
+    }, [isFocused, navigation, userGameStatus?.gameId]);
 
     const onCreateGame = async () => {
         setIsLoading(true);
         const status = await POST('/create-game');
         if (status.ok) {
-            navigation.navigate('GameScreen', { gameId: status.data.gameId } as any);
+            navigation.replace('GameScreen', { gameId: status.data.gameId });
         }
         setIsLoading(false);
     }
@@ -51,7 +59,7 @@ export const MainScreen = () => {
         setIsLoading(true);
         const status = await POST('/join-game', { gameId: gameId.toLocaleLowerCase() });
         if (status.ok) {
-            navigation.navigate('GameScreen', { gameId });
+            navigation.replace('GameScreen', { gameId });
         }
         setIsLoading(false);
     }
@@ -66,13 +74,16 @@ export const MainScreen = () => {
     return (<Background>
         {isLoading && <LoadingScreen />}
         {!isLoading &&
-            <View style={styles.outside}>
-                <GradientPanel roundBottom roundTop marginTop={10} marginBottom={10}>
+            <ScrollView contentContainerStyle={styles.outside}>
+                <GradientPanel height={Math.max(410, Math.min(620, height - 20))} roundBottom roundTop marginTop={10} marginBottom={10}>
                     <View style={styles.container}>
-                        <LogoScreen text="Join the game or create a new one" />
+                        <View style={[styles.logoSlot, { height: Math.max(128, Math.min(220, height * 0.3)) }]}>
+                            <LogoScreen text="Join the game or create a new one" />
+                        </View>
                         <View style={styles.panelSection}>
-                            <View style={styles.joinGameContainer}>
-                                <Text style={styles.gameCodeText}>Enter game code:</Text>
+                            <ComputerScreen width="94%" maxWidth={430} height={154}>
+                                <View style={styles.joinGameContainer}>
+                                <Text style={[styles.gameCodeText, { fontSize: Math.max(13, Math.min(17, width / 24)) }]}>ENTER 4-DIGIT GAME CODE</Text>
                                 <View style={styles.joinGameInput}>
 
                                     <CodeField
@@ -88,30 +99,25 @@ export const MainScreen = () => {
                                         renderCell={({ index, symbol, isFocused }) => (
                                             <Text
                                                 key={index}
-                                                style={[styles.cell, isFocused && styles.focusCell]}
+                                            style={[styles.cell, { width: cellSize, height: cellSize + 4, lineHeight: cellSize, fontSize: cellSize * 0.44 }, isFocused && styles.focusCell]}
                                                 onLayout={getCellOnLayoutHandler(index)}>
                                                 {symbol || (isFocused ? <Cursor /> : null)}
                                             </Text>
                                         )}
                                     />
                                 </View>
-                            </View>
+                                </View>
+                            </ComputerScreen>
                             <View style={styles.button}>
-                                <GameButtonGroup>
-                                    <GameButton color={colors.pureWhite} size={50} isEnabled labelBottom="Settings"
-                                        onPress={() => navigation.navigate('SettingsScreen')} />
-                                    <GameButton color={colors.pureWhite} size={50} />
-                                </GameButtonGroup>
-                                <GameButtonGroup>
-                                    <GameButton color={colors.pureWhite} size={50} />
-                                    <GameButton color={colors.greenDigital} size={50} isEnabled labelBottom="Create new game"
-                                        onPress={() => onCreateGame()} />
-                                </GameButtonGroup>
+                                <GameButton color={colors.amber} size={50} isEnabled labelBottom="Settings"
+                                    onPress={() => navigation.navigate('SettingsScreen')} />
+                                <GameButton color={colors.greenDigital} size={54} isEnabled labelBottom="Create game"
+                                    onPress={() => onCreateGame()} />
                             </View>
                         </View>
                     </View>
                 </GradientPanel>
-            </View>
+            </ScrollView>
         }
 
     </Background>);
@@ -122,7 +128,8 @@ const styles = StyleSheet.create({
         alignContent: "center",
         justifyContent: 'center',
         alignItems: 'center',
-        flex: 1,
+        flexGrow: 1,
+        paddingHorizontal: 9,
     },
     container: {
         alignContent: "center",
@@ -132,14 +139,18 @@ const styles = StyleSheet.create({
     },
     panelSection: {
         alignContent: "center",
-        justifyContent: 'space-around',
+        justifyContent: 'center',
         alignItems: 'center',
         flex: 1,
-        flexWrap: "wrap",
+        gap: 8,
+    },
+    logoSlot: {
+        width: "100%",
     },
     joinGameContainer: {
-        justifyContent: "flex-start",
-        alignContent: 'flex-start',
+        justifyContent: "center",
+        alignItems: "center",
+        width: "100%",
     },
     joinGameInput: {
         flexDirection: 'row',
@@ -154,7 +165,8 @@ const styles = StyleSheet.create({
     gameCodeText: {
         color: colors.lightGray1,
         fontSize: 18,
-        marginLeft: 10,
+        letterSpacing: 1.2,
+        fontFamily: 'title',
     },
     root: { flex: 1, padding: 20 },
     title: { textAlign: 'center', fontSize: 30 },
@@ -162,7 +174,7 @@ const styles = StyleSheet.create({
     cell: {
         width: 50,
         height: 60,
-        lineHeight: 38,
+        lineHeight: 36,
         fontSize: 24,
         borderWidth: 2,
         borderColor: colors.lightGray1,
@@ -171,8 +183,7 @@ const styles = StyleSheet.create({
         fontFamily: 'title',
         fontWeight: 'bold',
         color: colors.greenDigital,
-        margin: 8,
-        paddingTop: 10,
+        marginHorizontal: 4,
     },
     focusCell: {
         borderColor: colors.greenDigital,

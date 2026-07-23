@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useRef } from "react";
 import { Animated, StyleSheet, ViewStyle } from "react-native";
 import { colors } from "../../utils/constants";
 
@@ -8,30 +8,26 @@ type AnimatedCursorProps = {
 
 export const AnimatedCursor = ({ style }: AnimatedCursorProps) => {
 
-    const { opacityAnimationValue } = useMemo(() => ({
-        opacityAnimationValue: new Animated.Value(0)
-    }), []);
+    const opacityAnimationValue = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
-        Animated.loop(
+        const animation = Animated.loop(
             Animated.sequence([
                 Animated.timing(opacityAnimationValue, {
                     toValue: 1,
-                    duration: 500,
-
-                    useNativeDriver: false
+                    duration: 650,
+                    useNativeDriver: true,
                 }),
                 Animated.timing(opacityAnimationValue, {
                     toValue: 0,
-                    duration: 500,
-                    useNativeDriver: false
+                    duration: 650,
+                    useNativeDriver: true,
                 })
-            ]),
-            {
-                iterations: -1
-            }
-        ).start();
-    }, []);
+            ])
+        );
+        animation.start();
+        return () => animation.stop();
+    }, [opacityAnimationValue]);
 
     return (<Animated.View style={style ? {...style, opacity: opacityAnimationValue} :  {...styles.cursor,  opacity: opacityAnimationValue}} />);
 }

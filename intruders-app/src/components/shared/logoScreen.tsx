@@ -1,5 +1,5 @@
 import React from "react";
-import { Dimensions, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { colors } from "../../utils/constants";
 import { AnimatedCursor } from "./animatedCursor";
 import { AnimatedUFO } from "./animatedUFO";
@@ -10,15 +10,16 @@ type LogoScreenProps = {
 }
 
 export const LogoScreen = ({ text }: LogoScreenProps) => {
+    const { width } = useWindowDimensions();
     return (
         <View style={styles.screen}>
-            <ComputerScreen marginTop={10} width={Dimensions.get("screen").width - 40}>
+            <ComputerScreen marginTop={8} width="100%" maxWidth={520}>
                 <View style={styles.screenAnimation}>
-                    <AnimatedUFO starLength={Dimensions.get("screen").width / 2 - 10} />
+                    <AnimatedUFO starLength={Math.max(100, Math.min(240, width - 96))} />
                 </View>
                 <View style={styles.screenTitle}>
-                    <Text style={styles.title}>ALIEN INTRUDERS</Text>
-                    <Text style={styles.actionText}>{text}<AnimatedCursor /></Text>
+                    <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.title, { fontSize: Math.max(14, Math.min(26, width / 21)) }]}>ALIEN INTRUDERS</Text>
+                    <Text style={[styles.actionText, { fontSize: Math.max(11, Math.min(15, width / 30)) }]}>{text.toUpperCase()}<AnimatedCursor /></Text>
                 </View>
             </ComputerScreen>
         </View>);
@@ -31,6 +32,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         flex: 1,
         marginBottom: 10,
+        width: '100%',
+        minWidth: 0,
     },
     screenAnimation: {
         alignContent: "center",
@@ -41,21 +44,25 @@ const styles = StyleSheet.create({
     title: {
         fontFamily: 'title',
         color: colors.greenDigital,
-        fontSize: 20,
+        letterSpacing: 2.2,
         textAlign: 'center',
         zIndex: 1,
+        width: '100%',
     },
     actionText: {
         fontFamily: 'title',
         color: colors.greenDigital,
-        fontSize: 12,
+        letterSpacing: 1,
         textAlign: 'center',
         zIndex: 1,
+        width: '100%',
     },
     screen: {
         alignContent: "center",
         justifyContent: 'center',
         alignItems: 'center',
         flex: 1,
+        width: '100%',
+        minWidth: 0,
     },
 });

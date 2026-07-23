@@ -1,4 +1,4 @@
-import { Dimensions, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { GameStateResponse, MISSION_STATUS } from "../../types/gameServerTypes";
 import React from "react";
 import { MissionItem } from "./missionItem";
@@ -7,9 +7,9 @@ import { GradientPanel } from "../shared/gradientPanel";
 import { ComputerScreen } from "../shared/computerScreen";
 import { colors } from "../../utils/constants";
 
-export const MissionsCabin = ({ gameState }: { gameState?: GameStateResponse }) => {
+export const MissionsCabin = ({ gameState, embedded = false }: { gameState?: GameStateResponse, embedded?: boolean }) => {
     return (
-        <GradientPanel height={150} reverse>
+        <GradientPanel embedded={embedded} height={embedded ? 166 : 210} reverse>
             <View style={styles.missionsIndicatorContainer}>
                 {Array.from({ length: 5 }, (val, index) => index + 1).map(missionIndex => {
                     const buttonColor = gameState.missions[missionIndex]?.status === MISSION_STATUS.MISSION_SUCCEED ? colors.green :
@@ -21,7 +21,7 @@ export const MissionsCabin = ({ gameState }: { gameState?: GameStateResponse }) 
                     </View>)
                 })}
             </View>
-            <ComputerScreen width={Dimensions.get("screen").width - 40} height={100} marginTop={7} maxWidth={480}>
+            <ComputerScreen embedded={embedded} width="100%" height={112} marginTop={7} maxWidth={520}>
                 <View style={styles.missionsList}>
                     {Array.from({ length: 5 }, (val, index) => index + 1).map(missionIndex => (<MissionItem
                         missionNumber={missionIndex}
@@ -44,7 +44,7 @@ export const MissionsCabin = ({ gameState }: { gameState?: GameStateResponse }) 
 
 const styles = StyleSheet.create({
     missionsIndicatorContainer: {
-        width: Dimensions.get("screen").width - 80,
+        width: "92%",
         height: 15,
         alignContent: "center",
         justifyContent: 'space-between',
@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     rejectionsContainer: {
-        width: Dimensions.get("screen").width - 40,
+        width: "100%",
         height: 20,
         justifyContent: 'center',
         alignItems: 'center',
@@ -73,7 +73,8 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
     },
     rejectionsLable: {
-        fontSize: 14,
+        fontFamily: 'basic',
+        fontSize: 13,
         color: colors.lightGray1,
         justifyContent: 'center',
         alignItems: 'center',
@@ -92,7 +93,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         paddingLeft: 3,
         paddingRight: 3,
-        height: 68,
+        height: 78,
         width: '100%',
     }
 });

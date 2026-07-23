@@ -68,7 +68,7 @@ export class GameDao {
         const gameItems = await this.getGameItems(gameId);
         const itemsToDelete = gameItems.filter(item => {
             const [type] = item.key.split('$');
-            return type !== 'game';
+            return type !== 'game' && type !== 'player';
         });
         await this.batchWrite(itemsToDelete.map(item => ({ DeleteRequest: { Key: { key: item.key, gameId: item.gameId } as any } })));
     }
