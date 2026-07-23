@@ -1,17 +1,28 @@
 
 
-import { DocumentClient, ScanInput, WriteRequests } from 'aws-sdk/clients/dynamodb';
-import { chunk, values } from 'lodash';
+import {
+    BatchWriteCommand,
+    BatchWriteCommandInput,
+    DeleteCommand,
+    DynamoDBDocumentClient,
+    GetCommand,
+    PutCommand,
+    QueryCommand,
+    QueryCommandInput,
+    ScanCommand,
+    ScanCommandInput,
+    UpdateCommand,
+    UpdateCommandInput,
+} from '@aws-sdk/lib-dynamodb';
 import { DBGame, DBItem, DBKey, DBMission, DBPlayer, DBRejection, DBVote, DBMissionAction, FinishedGameStatus } from '../types/database';
 import { GAME_STATUS, MISSION_ACTION, MISSION_STATUS, PlayerInfo, VOTE } from '../types/types';
 
-type QueryInput = DocumentClient.QueryInput;
-type AttributeMap = DocumentClient.AttributeMap;
-type UpdateItemInput = DocumentClient.UpdateItemInput;
-type BatchWriteItemRequestMap = DocumentClient.BatchWriteItemRequestMap;
+type AttributeMap = Record<string, any>;
+type BatchWriteItemRequestMap = NonNullable<BatchWriteCommandInput['RequestItems']>;
+type WriteRequest = NonNullable<BatchWriteItemRequestMap[string]>[number];
 
 export class GameDao {
-    constructor(private readonly client: DocumentClient, private readonly tableName: string, private readonly index: string) { }
+    constructor(private readonly client: DynamoDBDocumentClient, private readonly tableName: string, private readonly index: string) { }
 
     public async getAll() {
         const allItems = await this.scan({
@@ -303,42 +314,45 @@ export class GameDao {
     }
 
     private put(data: AttributeMap) {
-        return this.client.put({
+        return this.client.send(new PutCommand({
             TableName: this.tableName,
             Item: { ...data }
-        }).promise();
+        }));
     }
 
-    private get(key: DocumentClient.Key) {
-        return this.client.get({
+    private get(key: Record<string, any>) {
+        return this.client.send(new GetCommand({
             TableName: this.tableName,
             Key: key
-        }).promise();
+        }));
     }
 
     private delete(key: DBKey) {
-        return this.client.delete({
+        return this.client.send(new DeleteCommand({
             TableName: this.tableName,
             Key: key,
-        }).promise().catch(err => {
+        })).catch(err => {
             console.warn('Delete failed', err);
             throw err;
         });
     }
 
-    private update(key: DBKey, input: Omit<UpdateItemInput, 'TableName' | 'Key'>) {
-        return this.client.update({
+    private update(key: DBKey, input: Omit<UpdateCommandInput, 'TableName' | 'Key'>) {
+        return this.client.send(new UpdateCommand({
             TableName: this.tableName,
             Key: key,
             ...input,
-        }).promise().catch(err => {
+        })).catch(err => {
             console.warn('Update failed', err);
             throw err;
         });
     }
 
-    private async batchWrite(requestList: WriteRequests) {
-        const batchCalls = chunk(requestList, 25).map(async writeRequestsChunk => {
+    private async batchWrite(requestList: WriteRequest[]) {
+        const chunks = Array.from({ length: Math.ceil(requestList.length / 25) }, (_, index) =>
+            requestList.slice(index * 25, index * 25 + 25)
+        );
+        const batchCalls = chunks.map(async writeRequestsChunk => {
             const batchWriteParams = {
                 [this.tableName]: writeRequestsChunk
             }
@@ -349,39 +363,39 @@ export class GameDao {
 
     private async executeBatchRequest(requestMap: BatchWriteItemRequestMap) {
         do {
-            let result = await this.client.batchWrite({
+            const result = await this.client.send(new BatchWriteCommand({
                 RequestItems: requestMap
-            }).promise();
+            }));
             if (result.UnprocessedItems) {
                 requestMap = result.UnprocessedItems;
             } else {
                 break;
             }
-        } while (values(requestMap).some(entries => entries.length > 0));
+        } while (Object.values(requestMap).some(entries => entries.length > 0));
     }
 
-    private async query<T>(params: QueryInput) {
+    private async query<T>(params: QueryCommandInput) {
         let lastKey;
-        let result = [];
+        const result: T[] = [];
 
         do {
             params.ExclusiveStartKey = lastKey;
-            let data = await this.client.query(params).promise();
+            const data = await this.client.send(new QueryCommand(params));
             lastKey = data.LastEvaluatedKey;
-            result.push(...data.Items as T[]);
+            result.push(...(data.Items || []) as T[]);
         } while (lastKey);
         return result;
     }
 
-    private async scan<T = AttributeMap>(params: ScanInput): Promise<T[]> {
+    private async scan<T = AttributeMap>(params: ScanCommandInput): Promise<T[]> {
         let list: T[] = [];
         let lastKey;
 
         do {
             params.ExclusiveStartKey = lastKey;
-            let data = await this.client.scan(params).promise();
+            const data = await this.client.send(new ScanCommand(params));
             lastKey = data.LastEvaluatedKey;
-            list.push(...data.Items as T[]);
+            list.push(...(data.Items || []) as T[]);
         } while (lastKey);
         return list;
     }

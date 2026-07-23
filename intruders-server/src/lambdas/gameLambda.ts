@@ -1,12 +1,13 @@
-import { Context, APIGatewayProxyHandler, APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { DocumentClient } from 'aws-sdk/clients/dynamodb';
+import { APIGatewayProxyHandler, APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 import { GameDao } from '../dao/gameDao';
 import { GameService } from '../services/gameService';
 import { getActionByRequestPath } from '../utils/gameUtils';
 
 const TABLE_INDEX = 'game-id';
 
-export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
+export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
 
 
     console.log(`Event: ${JSON.stringify(event, null, 2)}`);
@@ -29,7 +30,13 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
 
     const tableName = process.env.TABLE_NAME as string;
     const region = process.env.REGION as string;
-    const gameDao = new GameDao(new DocumentClient({ region }), tableName, TABLE_INDEX);
+    const gameDao = new GameDao(
+        DynamoDBDocumentClient.from(new DynamoDBClient({ region }), {
+            marshallOptions: { removeUndefinedValues: true },
+        }),
+        tableName,
+        TABLE_INDEX,
+    );
 
     try {
         const bodyParameters = event.body ? JSON.parse(event.body) : {};

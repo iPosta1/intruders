@@ -1,7 +1,10 @@
-export function mockClass<T>(names: (keyof T)[]): jest.Mocked<T> {
-    let obj = {} as jest.Mocked<any>;
+import type { Mocked } from 'vitest';
+import { vi } from 'vitest';
+
+export function mockClass<T>(names: (keyof T)[]): Mocked<T> {
+    const obj = {} as Mocked<any>;
     for (let prop of names) {
-        obj[prop] = jest.fn();
+        obj[prop] = vi.fn();
     }
     return obj;
 }

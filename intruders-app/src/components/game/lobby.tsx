@@ -5,7 +5,7 @@ import { Image, StyleSheet, Text, TouchableOpacity, View, Share, Dimensions, Tex
 import { RootStackParamList } from "../../../App";
 import { GameStateResponse } from "../../types/gameServerTypes";
 import { Background } from "../background";
-import QRCode from 'qrcode.react';
+import { QRCodeSVG } from 'qrcode.react';
 import { AppContext, HOST } from "../../context";
 import { useGameStatus } from "../../services/gameService";
 import { DELETE, POST, PUT, ServerResponse } from "../../utils/fetch";
@@ -129,7 +129,7 @@ export const Lobby = ({ gameState }: { gameState: GameStateResponse }) => {
 
                             </View>
                             <View style={styles.qrContainer}>
-                                <QRCode value={gameLink} bgColor={colors.screenColor} fgColor={colors.greenDigital} />
+                                <QRCodeSVG value={gameLink} bgColor={colors.screenColor} fgColor={colors.greenDigital} />
                             </View>
                         </ComputerScreen>
                         <ComputerScreen width={Dimensions.get("screen").width - 40} marginTop={10} maxWidth={480}>

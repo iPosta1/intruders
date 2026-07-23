@@ -19,9 +19,9 @@ USER "${USER}"
 
 WORKDIR ${DIR}
 ENV PATH ${DIR}/.bin:$PATH
-COPY --chown=node ./web-build ./web-build
+COPY --chown=node ./dist ./dist
 
 
 #ENV NODE_ENV=production
 ENTRYPOINT ["npx", "serve"]
-CMD ["web-build"]
+CMD ["-s", "dist"]

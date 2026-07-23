@@ -7,45 +7,22 @@
   },
   "private": true,
   "scripts": {
-    "tsc": "tsc --project .",
-    "build": "npm run clean && npm run tsc && npm run test",
-    "postbuild": "webpack",
-    "clean": "rimraf ./out",
-    "test": "jest --coverage"
+    "tsc": "tsc --project . --noEmit",
+    "build": "npm run clean && npm run tsc && npm run test && npm run bundle",
+    "bundle": "esbuild src/lambdas/gameLambda.ts src/lambdas/cleanupLambda.ts --bundle --platform=node --target=node24 --outdir=out --sourcemap",
+    "clean": "node -e \"require('node:fs').rmSync('out',{recursive:true,force:true})\"",
+    "test": "vitest run --coverage"
   },
   "dependencies": {
-    "aws-lambda": "^1.0.7",
-    "aws-sdk": "^2.1271.0",
-    "lodash": "^4.17.21"
+    "@aws-sdk/client-dynamodb": "^3.1094.0",
+    "@aws-sdk/lib-dynamodb": "^3.1094.0"
   },
   "devDependencies": {
-    "@types/aws-lambda": "^8.10.109",
-    "@types/cls-hooked": "^4.2.0",
-    "@types/express": "~4.11.1",
-    "@types/jest": "^29.2.4",
-    "@types/lodash": "^4.14.161",
+    "@types/aws-lambda": "^8.10.162",
     "@types/node": "^24.0.0",
-    "@types/request-promise": "^4.1.48",
-    "@types/uuid": "^3.4.5",
-    "jest": "^26.6.3",
-    "request-promise": "^4.2.6",
-    "ts-jest": "^26.5.2",
-    "ts-loader": "^9.4.2",
-    "ts-node": "^10.9.1",
-    "tslint": "^5.20.0",
-    "typescript": "^4.9.4",
-    "webpack": "^5.75.0",
-    "webpack-cli": "^5.0.1"
-  },
-  "jest": {
-    "preset": "ts-jest",
-    "testEnvironment": "node",
-    "testMatch": [
-      "<rootDir>/test/*.spec.ts"
-    ],
-    "roots": [
-      "<rootDir>/src",
-      "<rootDir>/test"
-    ]
+    "@vitest/coverage-v8": "^4.1.10",
+    "esbuild": "^0.28.1",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
   }
 }

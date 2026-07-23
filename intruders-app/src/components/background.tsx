@@ -1,9 +1,12 @@
 import { LinearGradient } from "expo-linear-gradient";
 import React, { ReactNode } from "react";
-import { ImageBackground, SafeAreaView } from "react-native";
+import { ColorValue, ImageBackground, SafeAreaView } from "react-native";
 import { colors } from "../utils/constants";
 
-export const Background = ({ children, colorsArray }: { children: Array<ReactNode> | ReactNode, colorsArray?: string[] }) => {
+export const Background = ({ children, colorsArray }: {
+    children: Array<ReactNode> | ReactNode,
+    colorsArray?: readonly [ColorValue, ColorValue, ...ColorValue[]],
+}) => {
     return (<SafeAreaView style={{ flex: 1, justifyContent: 'space-around', alignContent: 'center' }}>
         <LinearGradient
             colors={colorsArray || [colors.gray4, colors.gray1, colors.gray3]}

@@ -1,11 +1,11 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { ReactNode } from "react";
-import { ViewStyle } from "react-native";
+import { ColorValue, ViewStyle } from "react-native";
 
 type GradientProps = {
     children: Array<ReactNode> | ReactNode,
     style: ViewStyle,
-    colors: string[]
+    colors: readonly [ColorValue, ColorValue, ...ColorValue[]]
 }
 
 export const Gradient = ({ children, style, colors }: GradientProps) => {

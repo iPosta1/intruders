@@ -1,5 +1,6 @@
 import { Handler } from 'aws-lambda';
-import { DocumentClient } from 'aws-sdk/clients/dynamodb';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 import { GameDao } from '../dao/gameDao';
 import { DBItem } from '../types/database';
 
@@ -8,7 +9,13 @@ const TABLE_INDEX = 'game-id';
 export const handler: Handler = async () => {
     const tableName = process.env.TABLE_NAME as string;
     const region = process.env.REGION as string;
-    const gameDao = new GameDao(new DocumentClient({ region }), tableName, TABLE_INDEX);
+    const gameDao = new GameDao(
+        DynamoDBDocumentClient.from(new DynamoDBClient({ region }), {
+            marshallOptions: { removeUndefinedValues: true },
+        }),
+        tableName,
+        TABLE_INDEX,
+    );
 
     const allTableItems = await gameDao.getAll();
     const gameItems = allTableItems.filter(item => {

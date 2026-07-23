@@ -2,9 +2,10 @@ import { GameDao } from "../src/dao/gameDao";
 import { GameService } from "../src/services/gameService";
 import { GAME_ACTIONS, GAME_STATUS, MISSION_ACTION, MISSION_STATUS, ROLE, VOTE } from "../src/types/types";
 import { mockClass } from "./utils";
+import type { Mocked } from "vitest";
 
 describe('Game service tests', () => {
-    let gameDAO: jest.Mocked<GameDao>;
+    let gameDAO: Mocked<GameDao>;
     const userId = 'test-user-id';
     const defaultUserName = 'default-test-user-name';
 

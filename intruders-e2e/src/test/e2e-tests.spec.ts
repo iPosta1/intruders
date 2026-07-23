@@ -1,19 +1,20 @@
-import * as request from 'request-promise';
 const SERVER_URL = process.env.SERVER_URL || 'https://pfi1of1wg6.execute-api.us-east-2.amazonaws.com';
 
 const sendRequest = async (method: string, path: string, playerId: string, body?: any) => {
     console.log(`${method} ${path}`);
-    const resp = await request({
+    const response = await fetch(`${SERVER_URL}${path}`, {
         method: method,
-        url: `${SERVER_URL}${path}`,
-        json: true,
-        body: body,
+        body: body ? JSON.stringify(body) : undefined,
         headers: {
             'X-Player-Id': playerId,
             'X-Player-Name': encodeURIComponent(`Player ${playerId.split('-').pop()}`),
+            'Content-Type': 'application/json',
         }
     });
-    return resp;
+    if (!response.ok) {
+        throw new Error(`${response.status} ${await response.text()}`);
+    }
+    return response.json() as Promise<any>;
 }
 
 describe('Game service e2e tests', () => {

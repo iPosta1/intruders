@@ -1,4 +1,3 @@
-import { shuffle } from 'lodash';
 import { GameDao } from '../dao/gameDao'
 import { DBMissionAction, DBRejection, DBVote, DBGame, DBMission, DBPlayer, FinishedGameStatus } from '../types/database';
 import {
@@ -9,6 +8,15 @@ import { checkGameId } from '../utils/decorators';
 import { generateGameId, getGameSpecs } from '../utils/gameUtils';
 
 type ParamsMap = { [key: string]: string };
+
+const shuffle = <T>(items: T[]): T[] => {
+    const result = [...items];
+    for (let index = result.length - 1; index > 0; index--) {
+        const randomIndex = Math.floor(Math.random() * (index + 1));
+        [result[index], result[randomIndex]] = [result[randomIndex], result[index]];
+    }
+    return result;
+};
 
 export class GameService {
 
@@ -135,7 +143,7 @@ export class GameService {
         const players: PlayerInfo[] = Object.keys(gameState.players).map(playerNumber => ({
             id: gameState.players[playerNumber].id,
             name: gameState.players[playerNumber].name,
-            role: null,
+            role: null as ROLE,
         }));
         if (players.length < 5 || players.length > 10) {
             throw new Error('You need 5-10 players for this game');

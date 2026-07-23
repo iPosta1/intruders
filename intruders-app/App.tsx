@@ -1,6 +1,6 @@
 import { LinkingOptions, NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { useFonts } from '@use-expo/font';
+import { useFonts } from 'expo-font';
 import { useEffect, useState } from 'react';
 import { RootSiblingParent } from 'react-native-root-siblings';
 import { AppContext } from './src/context';
@@ -34,7 +34,7 @@ const linking: LinkingOptions<RootStackParamList> = {
     prefixes: [],
 };
 
-const Stack = createStackNavigator<RootStackParamList>();
+const Stack = createStackNavigator<RootStackParamList, undefined>();
 
 export default function App() {
     const isGamePage = window.location.pathname.startsWith('/game/');
@@ -71,7 +71,7 @@ export default function App() {
     if (isLoading) {
         return (
             <NavigationContainer>
-                <Stack.Navigator screenOptions={{ headerShown: false }}>
+                <Stack.Navigator id={undefined} screenOptions={{ headerShown: false }}>
                     <Stack.Screen name="LoadingScreen" component={LoadingScreen} />
                 </Stack.Navigator>
             </NavigationContainer>
@@ -83,13 +83,14 @@ export default function App() {
             <RootSiblingParent>
                 {!player ? (
                     <NavigationContainer>
-                        <Stack.Navigator screenOptions={{ headerShown: false }}>
+                        <Stack.Navigator id={undefined} screenOptions={{ headerShown: false }}>
                             <Stack.Screen name="LoginScreen" component={LoginScreen} options={{ title: 'Choose name' }} />
                         </Stack.Navigator>
                     </NavigationContainer>
                 ) : (
                     <NavigationContainer linking={linking}>
                         <Stack.Navigator
+                            id={undefined}
                             initialRouteName={isGamePage || gameId ? 'GameScreen' : 'MainScreen'}
                             screenOptions={{ headerShown: false }}
                         >

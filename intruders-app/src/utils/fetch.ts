@@ -2,7 +2,6 @@ import React from 'react';
 import Toast from 'react-native-root-toast';
 import { SERVER_URL } from '../context';
 import { colors } from './constants';
-import "setimmediate";
 import { loadPlayerIdentity } from '../services/playerIdentity';
 
 export type ServerResponse = {

@@ -3,7 +3,8 @@
   "compilerOptions": {
     "strict": true,
     "strictNullChecks": false,
-    "noEmit": false,
+    "noEmit": true,
     "jsx": "react-jsx"
-  }
+  },
+  "exclude": ["dist"]
 }
