@@ -1,71 +1,70 @@
-import React, { useEffect } from "react";
-import { Image, Text, View, StyleSheet, TouchableOpacity, Platform, Dimensions, Animated } from "react-native";
-import { Background } from "../components/background";
-import { TextLogo } from "../components/textLogo";
-import { BackgroundCircle } from "../components/backgroundCircle";
-import { firebaseAuthenticate } from "../services/authService";
-import * as Google from 'expo-auth-session/providers/google';
-import * as WebBrowser from 'expo-web-browser';
-import { AppContext, WEB_CLIENT_ID } from "../context";
-import { GradientPanel } from "../components/shared/gradientPanel";
-import { ComputerScreen } from "../components/shared/computerScreen";
-import { AnimatedUFO } from "../components/shared/animatedUFO";
-import { colors } from "../utils/constants";
-import { AnimatedCursor } from "../components/shared/animatedCursor";
-import { GameButton, GameButtonGroup } from "../components/shared/gameButton";
-import { LogoScreen } from "../components/shared/logoScreen";
+import React, { useState } from 'react';
+import { StyleSheet, TextInput, View } from 'react-native';
+import { Background } from '../components/background';
+import { GameButton } from '../components/shared/gameButton';
+import { GradientPanel } from '../components/shared/gradientPanel';
+import { LogoScreen } from '../components/shared/logoScreen';
+import { AppContext } from '../context';
+import { colors } from '../utils/constants';
 
 export const LoginScreen = () => {
-    if (Platform.OS === 'web') {
-        WebBrowser.maybeCompleteAuthSession();
-    }
-    const { promptAsync } = React.useContext(AppContext);
-    const authenticateWithGoogle = async () => {
-        const res = await promptAsync();
-        if (res.type === 'success') {
-            await firebaseAuthenticate((res as any).authentication.accessToken);
-        }
-    }
+    const [name, setName] = useState('');
+    const { setPlayerName } = React.useContext(AppContext);
+    const normalizedName = name.trim();
 
-    return (<Background>
-        <View style={styles.outside}>
-            <GradientPanel roundBottom roundTop marginTop={10} marginBottom={10}>
-                <View style={styles.container}>
-                    <LogoScreen text="Log in to start" />
-                    <View style={styles.button}>
-                        <GameButton color={colors.red} size={50} />
-                        <GameButtonGroup>
-                            <GameButton color={colors.pureWhite} size={50} />
-                            <GameButton color={colors.pureWhite} size={50} />
-                        </GameButtonGroup>
-                        <GameButton color={colors.pureWhite} size={50} isEnabled labelBottom="Google sign in" labelSize={10}
-                            onPress={() => authenticateWithGoogle()} />
+    return (
+        <Background>
+            <View style={styles.outside}>
+                <GradientPanel roundBottom roundTop marginTop={10} marginBottom={10}>
+                    <View style={styles.container}>
+                        <LogoScreen text="What should we call you?" />
+                        <TextInput
+                            autoFocus
+                            maxLength={16}
+                            placeholder="Your name"
+                            placeholderTextColor={colors.lightGray2}
+                            value={name}
+                            onChangeText={setName}
+                            onSubmitEditing={() => normalizedName && setPlayerName(normalizedName)}
+                            style={styles.input}
+                        />
+                        <GameButton
+                            color={colors.greenDigital}
+                            size={50}
+                            isEnabled={!!normalizedName}
+                            labelBottom="Continue"
+                            labelSize={12}
+                            onPress={() => setPlayerName(normalizedName)}
+                        />
                     </View>
-                </View>
-            </GradientPanel>
-        </View>
-    </Background>);
+                </GradientPanel>
+            </View>
+        </Background>
+    );
 };
 
 const styles = StyleSheet.create({
     outside: {
-        alignContent: "center",
+        alignContent: 'center',
         justifyContent: 'center',
         alignItems: 'center',
         flex: 1,
     },
     container: {
-        alignContent: "center",
         justifyContent: 'center',
         alignItems: 'center',
         flex: 1,
+        gap: 24,
     },
-    button: {
-        alignContent: "center",
-        justifyContent: 'center',
-        alignItems: 'center',
-        flex: 1,
-        flexDirection: 'row',
-        flexWrap: "wrap",
+    input: {
+        width: 240,
+        borderWidth: 2,
+        borderColor: colors.greenDigital,
+        backgroundColor: colors.screenColor,
+        color: colors.greenDigital,
+        fontFamily: 'title',
+        fontSize: 18,
+        padding: 12,
+        textAlign: 'center',
     },
 });

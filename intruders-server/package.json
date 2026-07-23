@@ -1,6 +1,10 @@
 {
   "name": "intruders-server",
   "version": "0.0.1",
+  "engines": {
+    "node": ">=24 <25",
+    "npm": ">=11"
+  },
   "private": true,
   "scripts": {
     "tsc": "tsc --project .",
@@ -12,7 +16,6 @@
   "dependencies": {
     "aws-lambda": "^1.0.7",
     "aws-sdk": "^2.1271.0",
-    "firebase-admin": "^11.4.1",
     "lodash": "^4.17.21"
   },
   "devDependencies": {
@@ -21,7 +24,7 @@
     "@types/express": "~4.11.1",
     "@types/jest": "^29.2.4",
     "@types/lodash": "^4.14.161",
-    "@types/node": "^10.14.19",
+    "@types/node": "^24.0.0",
     "@types/request-promise": "^4.1.48",
     "@types/uuid": "^3.4.5",
     "jest": "^26.6.3",

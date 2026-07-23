@@ -7,7 +7,7 @@ import { GameStateResponse } from "../../types/gameServerTypes";
 import { Background } from "../background";
 import QRCode from 'qrcode.react';
 import { AppContext, HOST } from "../../context";
-import { useGameStatus, useTokenId } from "../../services/gameService";
+import { useGameStatus } from "../../services/gameService";
 import { DELETE, POST, PUT, ServerResponse } from "../../utils/fetch";
 import { KeyedMutator } from "swr";
 import { colors } from "../../utils/constants";
@@ -18,10 +18,10 @@ import { AnimatedCursor } from "../shared/animatedCursor";
 import { GameButton } from "../shared/gameButton";
 import { crownIcon, pencilIcon } from "../icons";
 
-const NameTextInput = ({ initialValue, onSubmit, token, gameState, mutate }: {
+const NameTextInput = ({ initialValue, onSubmit, onNameChanged, gameState, mutate }: {
     initialValue: string,
     onSubmit: () => void,
-    token: string,
+    onNameChanged: (name: string) => void,
     gameState: GameStateResponse,
     mutate: KeyedMutator<GameStateResponse>,
 }) => {
@@ -44,10 +44,12 @@ const NameTextInput = ({ initialValue, onSubmit, token, gameState, mutate }: {
                 {!isLoading &&
                     <TouchableOpacity onPress={() => {
                         setIsLoading(true);
-                        PUT('/change-name', token, { newName: nameValue || initialValue, gameId: gameState.gameId }).then((resp) => {
+                        PUT('/change-name', { newName: nameValue || initialValue, gameId: gameState.gameId }).then((resp) => {
                             setIsLoading(false);
                             if (!!resp.ok) {
-                                gameState.players[gameState.playerIndex].name = nameValue || initialValue;
+                                const updatedName = nameValue || initialValue;
+                                gameState.players[gameState.playerIndex].name = updatedName;
+                                onNameChanged(updatedName);
                                 mutate(gameState);
                             }
                             onSubmit();
@@ -69,12 +71,11 @@ const NameTextInput = ({ initialValue, onSubmit, token, gameState, mutate }: {
 export const Lobby = ({ gameState }: { gameState: GameStateResponse }) => {
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
     const gameLink = `${HOST}/join/${gameState.gameId}`;
-    const { user } = React.useContext(AppContext);
+    const { player, setPlayerName } = React.useContext(AppContext);
     const [isNameEdited, setIsNameEdited] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const { data: token } = useTokenId(user);
-    const { mutate } = useGameStatus(gameState.gameId, token);
-    const userIsAGameOwner = gameState.creator === user.uid;
+    const { mutate } = useGameStatus(gameState.gameId, player?.id);
+    const userIsAGameOwner = gameState.creator === player?.id;
     const canStartTheGame = !!userIsAGameOwner && Object.keys(gameState.players).length > 4;
 
     const onShare = async () => {
@@ -99,7 +100,7 @@ export const Lobby = ({ gameState }: { gameState: GameStateResponse }) => {
     };
 
     const onRemovePlayer = async (playerId: string) => {
-        const resp = await DELETE(`/kick-player/${gameState.gameId}/${playerId}`, token);
+        const resp = await DELETE(`/kick-player/${gameState.gameId}/${playerId}`);
         if (resp.ok) {
             const index = Object.keys(gameState.players).find(playerIndex => gameState.players[playerIndex].id === playerId);
             delete gameState.players[index];
@@ -109,7 +110,7 @@ export const Lobby = ({ gameState }: { gameState: GameStateResponse }) => {
 
     const onStartGame = async () => {
         setIsLoading(true);
-        await POST('/start-game', token, { gameId: gameState.gameId });
+        await POST('/start-game', { gameId: gameState.gameId });
         mutate();
         setIsLoading(false);
     }
@@ -137,8 +138,8 @@ export const Lobby = ({ gameState }: { gameState: GameStateResponse }) => {
                                     Array.from({ length: 5 }, (val, index) => index + 1).map(val => {
                                         const index1 = val * 2 - 1;
                                         const index2 = val * 2;
-                                        const isUser1Player = gameState.players[index1]?.id === user.uid;
-                                        const isUser2Player = gameState.players[index2]?.id === user.uid;
+                                        const isUser1Player = gameState.players[index1]?.id === player?.id;
+                                        const isUser2Player = gameState.players[index2]?.id === player?.id;
                                         const PlayerElement = ({ index, isUserPlayer }: { index: number, isUserPlayer: boolean }) => {
                                             return (<View style={styles.column}>
 
@@ -158,8 +159,8 @@ export const Lobby = ({ gameState }: { gameState: GameStateResponse }) => {
                                                             (!!isNameEdited ?
                                                                 <NameTextInput
                                                                     onSubmit={() => setIsNameEdited(false)}
+                                                                    onNameChanged={setPlayerName}
                                                                     initialValue={gameState.players[index]?.name}
-                                                                    token={token}
                                                                     gameState={gameState}
                                                                     mutate={mutate}
                                                                 /> : <Text style={styles.playerText} numberOfLines={1}>

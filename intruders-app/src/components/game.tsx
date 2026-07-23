@@ -9,15 +9,15 @@ import { InfoCabin } from "./game/infoCabin";
 import { MissionsCabin } from "./game/missionsCabin";
 import { PlayersCabin } from "./game/playersCabin";
 
-export const Game = ({ gameState, token, mutate }: { gameState: GameStateResponse, token: string, mutate: KeyedMutator<GameStateResponse> }) => {
+export const Game = ({ gameState, mutate }: { gameState: GameStateResponse, mutate: KeyedMutator<GameStateResponse> }) => {
     const [showRoles, setShowRoles] = useState(false);
 
     return (<Background>
         <View style={styles.container}>
-            <PlayersCabin gameState={gameState} showRoles={showRoles} mutateGame={mutate} token={token} />
+            <PlayersCabin gameState={gameState} showRoles={showRoles} mutateGame={mutate} />
             <MissionsCabin gameState={gameState}></MissionsCabin>
             <InfoCabin gameState={gameState} showRoles={showRoles}></InfoCabin>
-            <ButtonsCabin gameState={gameState} setShowRoles={setShowRoles} showRoles={showRoles} token={token} mutateGame={mutate}></ButtonsCabin>
+            <ButtonsCabin gameState={gameState} setShowRoles={setShowRoles} showRoles={showRoles} mutateGame={mutate}></ButtonsCabin>
         </View>
     </Background>);
 }

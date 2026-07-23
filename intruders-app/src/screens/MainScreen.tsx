@@ -12,7 +12,7 @@ import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../../App";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { POST } from "../utils/fetch";
-import { useTokenId, useUserGameId } from "../services/gameService";
+import { useUserGameId } from "../services/gameService";
 import { LoadingScreen } from "./LoadingScreen";
 import { GradientPanel } from "../components/shared/gradientPanel";
 import { LogoScreen } from "../components/shared/logoScreen";
@@ -23,7 +23,7 @@ const CELL_COUNT = 4;
 
 export const MainScreen = () => {
     useIsFocused();
-    const { user } = React.useContext(AppContext);
+    const { player } = React.useContext(AppContext);
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
     const [value, setValue] = useState('');
     const ref = useBlurOnFulfill({ value, cellCount: CELL_COUNT });
@@ -32,8 +32,7 @@ export const MainScreen = () => {
         setValue,
     });
     const [isLoading, setIsLoading] = useState(false);
-    const { data: token } = useTokenId(user);
-    const { data: userGameStatus } = useUserGameId(token);
+    const { data: userGameStatus } = useUserGameId(player?.id);
 
     if (userGameStatus?.gameId) {
         navigation.navigate('GameScreen', { gameId: userGameStatus.gameId } as any);
@@ -41,7 +40,7 @@ export const MainScreen = () => {
 
     const onCreateGame = async () => {
         setIsLoading(true);
-        const status = await POST('/create-game', token);
+        const status = await POST('/create-game');
         if (status.ok) {
             navigation.navigate('GameScreen', { gameId: status.data.gameId } as any);
         }
@@ -50,7 +49,7 @@ export const MainScreen = () => {
 
     const onJoinGame = async (gameId: string) => {
         setIsLoading(true);
-        const status = await POST('/join-game', token, { gameId: gameId.toLocaleLowerCase() });
+        const status = await POST('/join-game', { gameId: gameId.toLocaleLowerCase() });
         if (status.ok) {
             navigation.navigate('GameScreen', { gameId });
         }
@@ -65,8 +64,8 @@ export const MainScreen = () => {
     }
 
     return (<Background>
-        {(isLoading || !token) && <LoadingScreen />}
-        {!isLoading && !!token &&
+        {isLoading && <LoadingScreen />}
+        {!isLoading &&
             <View style={styles.outside}>
                 <GradientPanel roundBottom roundTop marginTop={10} marginBottom={10}>
                     <View style={styles.container}>

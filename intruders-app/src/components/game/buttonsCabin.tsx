@@ -13,13 +13,12 @@ import { colors } from "../../utils/constants";
 
 type ButtonsCabinProps = {
     gameState?: GameStateResponse,
-    token?: string,
     setShowRoles: (param: boolean) => void,
     showRoles: boolean;
     mutateGame: KeyedMutator<GameStateResponse>,
 };
 
-export const ButtonsCabin = ({ gameState, token, setShowRoles, mutateGame, showRoles }: ButtonsCabinProps) => {
+export const ButtonsCabin = ({ gameState, setShowRoles, mutateGame, showRoles }: ButtonsCabinProps) => {
     const missionSpec = getMissionSpecification(gameState);
     const buttonSize = Dimensions.get("screen").width <= 340 || Dimensions.get("screen").height <= 640 ? 30 : 40;
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
@@ -32,17 +31,17 @@ export const ButtonsCabin = ({ gameState, token, setShowRoles, mutateGame, showR
 
     const onSendForApproval = async () => {
         setApprovalLoading(true);
-        await sendForApproval(token, gameState, mutateGame);
+        await sendForApproval(gameState, mutateGame);
         setApprovalLoading(false);
     }
 
     const onVote = async (v: VOTE) => {
-        await vote(v, token, gameState, mutateGame);
+        await vote(v, gameState, mutateGame);
     }
 
     const onAct = async (action: MISSION_ACTION) => {
         setActionLoading(true);
-        await act(action, token, gameState, mutateGame);
+        await act(action, gameState, mutateGame);
         setActionLoading(false);
     }
 

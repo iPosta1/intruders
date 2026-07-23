@@ -11,7 +11,7 @@ import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../../App";
 
-export const GameResult = ({ gameState }: { gameState: GameStateResponse, token: string }) => {
+export const GameResult = ({ gameState }: { gameState: GameStateResponse }) => {
 
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
     return (

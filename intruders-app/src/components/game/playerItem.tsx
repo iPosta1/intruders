@@ -13,7 +13,6 @@ export type PlayerItemProps = {
     playerRole?: string,
     showRoles: boolean,
     gameState: GameStateResponse,
-    token: string,
     mutateGame: KeyedMutator<GameStateResponse>,
 };
 
@@ -23,7 +22,6 @@ export const PlayerItem = ({
     name,
     showRoles,
     gameState,
-    token,
     mutateGame
 }: PlayerItemProps) => {
     const playerNumber = Number(playerIndex);
@@ -37,7 +35,7 @@ export const PlayerItem = ({
             !gameState.missions[gameState.mission].preSelectedPlayers.includes(playerIndex) &&
             gameState.missions[gameState.mission].preSelectedPlayers.length < missionSpec.players) {
             setIsLoading(true);
-            await selectPlayer(playerIndex, token, gameState, mutateGame);
+            await selectPlayer(playerIndex, gameState, mutateGame);
             setIsLoading(false);
         }
     }
@@ -45,7 +43,7 @@ export const PlayerItem = ({
     const onRemovePlayer = async (playerIndex: number) => {
         if (gameState.leader === gameState.playerIndex && gameState.status === GAME_STATUS.WAITING_LEADER_TO_SELECT_PLAYERS) {
             setIsLoading(true);
-            await removePlayer(playerIndex, token, gameState, mutateGame);
+            await removePlayer(playerIndex, gameState, mutateGame);
             setIsLoading(false);
         }
     }

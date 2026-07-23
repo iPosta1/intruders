@@ -1,6 +1,10 @@
 {
   "name": "intruders-server-e2e",
   "version": "0.0.0",
+  "engines": {
+    "node": ">=24 <25",
+    "npm": ">=11"
+  },
   "private": true,
   "scripts": {
     "tsc": "tsc --project .",
@@ -12,7 +16,7 @@
   "devDependencies": {
     "@types/jest": "^29.2.4",
     "@types/lodash": "^4.14.161",
-    "@types/node": "^10.14.19",
+    "@types/node": "^24.0.0",
     "@types/request-promise": "^4.1.48",
     "jest": "^26.6.3",
     "request-promise": "^4.2.6",

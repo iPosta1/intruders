@@ -7,9 +7,9 @@ import { KeyedMutator } from "swr";
 import { GradientPanel } from "../shared/gradientPanel";
 import { ComputerScreen } from "../shared/computerScreen";
 
-export const PlayersCabin = ({ gameState, token, showRoles, mutateGame, }: {
+export const PlayersCabin = ({ gameState, showRoles, mutateGame, }: {
     mutateGame: KeyedMutator<GameStateResponse>, showRoles: boolean,
-    gameState?: GameStateResponse, token?: string
+    gameState?: GameStateResponse
 }) => {
     const playersCount = Object.keys(gameState.players).length;
     return (<GradientPanel height={360} marginTop={5} roundTop>
@@ -23,7 +23,6 @@ export const PlayersCabin = ({ gameState, token, showRoles, mutateGame, }: {
                         gameState={gameState}
                         showRoles={showRoles}
                         mutateGame={mutateGame}
-                        token={token}
                     />);
                 })}
                 {getFakePlayerElements(Dimensions.get("screen").width, playersCount, gameState.players[gameState.leader].name, gameState.mission)}

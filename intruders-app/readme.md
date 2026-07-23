@@ -1,6 +1,10 @@
-# npx serve build. Do not use in production
+# Install and run locally
 # npm i
+# npm run web
+#
+# Test a production build locally
 # npm run build
+# npx serve web-build
 # docker build ./
 # docker tag <imageId> 947546022191.dkr.ecr.us-east-2.amazonaws.com/intruders-app:<version>
 # aws ecr get-login-password \

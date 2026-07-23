@@ -8,8 +8,7 @@ import { GameButton } from "../components/shared/gameButton";
 import { GradientPanel } from "../components/shared/gradientPanel";
 import { LogoScreen } from "../components/shared/logoScreen";
 import { AppContext } from "../context";
-import { logout } from "../services/authService";
-import { useTokenId, useUserGameId } from "../services/gameService";
+import { useUserGameId } from "../services/gameService";
 import { colors } from "../utils/constants";
 import { DELETE, GET } from "../utils/fetch";
 import { LoadingScreen } from "./LoadingScreen";
@@ -17,15 +16,14 @@ import { LoadingScreen } from "./LoadingScreen";
 export const SettingsScreen = () => {
     useIsFocused();
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-    const { user } = React.useContext(AppContext);
-    const { data: token } = useTokenId(user);
-    const { data: status, mutate, isLoading: userGameIsLoading } = useUserGameId(token);
+    const { player, clearPlayerName } = React.useContext(AppContext);
+    const { data: status, mutate, isLoading: userGameIsLoading } = useUserGameId(player?.id);
     mutate();
     const [isLoading, setIsLoading] = useState(false);
 
     const leaveTheGame = async () => {
         setIsLoading(true);
-        const resp = await DELETE(`/leave-game/${status.gameId}`, token);
+        const resp = await DELETE(`/leave-game/${status.gameId}`);
         if (resp.ok) {
             mutate(null);
             setIsLoading(false);
@@ -49,10 +47,10 @@ export const SettingsScreen = () => {
                     <View style={styles.menu}>
                         <View style={styles.optionsGroup}>
                             <View style={styles.optionItemRow}>
-                                <View style={styles.optionItem}><Text style={styles.menuItemText}>Log out</Text>
-                                    <Text style={styles.menuItemTextSmall}>{` (${user?.email})`}</Text></View>
+                                <View style={styles.optionItem}><Text style={styles.menuItemText}>Change player name</Text>
+                                    <Text style={styles.menuItemTextSmall}>{` (${player?.name})`}</Text></View>
                                 <View style={styles.optionItemButton}>
-                                    <GameButton size={50} color={colors.pureWhite} isEnabled onPress={() => logout()} />
+                                    <GameButton size={50} color={colors.pureWhite} isEnabled onPress={clearPlayerName} />
                                 </View>
                             </View>
                             {!!status?.gameId &&

@@ -4,7 +4,6 @@ const os = require('os');
 module.exports = {
   entry: {
     'gameLambda': './src/lambdas/gameLambda.ts',
-    'authLambda': './src/lambdas/authLambda.ts',
     'cleanupLambda': './src/lambdas/cleanupLambda.ts',
   },
   target: 'node',

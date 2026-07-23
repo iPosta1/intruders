@@ -7,7 +7,7 @@ import { GradientPanel } from "../shared/gradientPanel";
 import { ComputerScreen } from "../shared/computerScreen";
 import { colors } from "../../utils/constants";
 
-export const MissionsCabin = ({ gameState, token }: { gameState?: GameStateResponse, token?: string }) => {
+export const MissionsCabin = ({ gameState }: { gameState?: GameStateResponse }) => {
     return (
         <GradientPanel height={150} reverse>
             <View style={styles.missionsIndicatorContainer}>

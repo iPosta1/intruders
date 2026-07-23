@@ -3,16 +3,22 @@ import Toast from 'react-native-root-toast';
 import { SERVER_URL } from '../context';
 import { colors } from './constants';
 import "setimmediate";
+import { loadPlayerIdentity } from '../services/playerIdentity';
 
 export type ServerResponse = {
     ok: boolean,
     data?: any,
 };
 
-const makeRequest = async (path: string, type: string, token: string, body?: object): Promise<ServerResponse> => {
+const makeRequest = async (path: string, type: string, body?: object): Promise<ServerResponse> => {
+    const player = loadPlayerIdentity();
+    if (!player) {
+        return { ok: false };
+    }
     const headers = {
-        authorization: token,
         'Content-Type': 'application/json',
+        'X-Player-Id': player.id,
+        'X-Player-Name': encodeURIComponent(player.name),
     };
 
     const fetchResponse = await fetch(`${SERVER_URL}${path}`, {
@@ -53,20 +59,20 @@ const makeRequest = async (path: string, type: string, token: string, body?: obj
     }
 }
 
-export const GET = async (path: string, token: string) => {
-    return makeRequest(path, 'GET', token);
+export const GET = async (path: string) => {
+    return makeRequest(path, 'GET');
 }
 
-export const DELETE = async (path: string, token: string) => {
-    return makeRequest(path, 'DELETE', token);
+export const DELETE = async (path: string) => {
+    return makeRequest(path, 'DELETE');
 }
 
-export const POST = async (path: string, token: string, body?: object) => {
-    return makeRequest(path, 'POST', token, body);
+export const POST = async (path: string, body?: object) => {
+    return makeRequest(path, 'POST', body);
 }
 
-export const PUT = async (path: string, token: string, body?: object) => {
-    return makeRequest(path, 'PUT', token, body);
+export const PUT = async (path: string, body?: object) => {
+    return makeRequest(path, 'PUT', body);
 }
 
 const parseError = (msg: string) => {

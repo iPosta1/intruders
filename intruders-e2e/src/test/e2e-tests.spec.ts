@@ -1,7 +1,7 @@
 import * as request from 'request-promise';
 const SERVER_URL = process.env.SERVER_URL || 'https://pfi1of1wg6.execute-api.us-east-2.amazonaws.com';
 
-const sendRequest = async (method: string, path: string, userToken: string, body?: any) => {
+const sendRequest = async (method: string, path: string, playerId: string, body?: any) => {
     console.log(`${method} ${path}`);
     const resp = await request({
         method: method,
@@ -9,15 +9,15 @@ const sendRequest = async (method: string, path: string, userToken: string, body
         json: true,
         body: body,
         headers: {
-            authorization: userToken,
+            'X-Player-Id': playerId,
+            'X-Player-Name': encodeURIComponent(`Player ${playerId.split('-').pop()}`),
         }
     });
     return resp;
 }
 
 describe('Game service e2e tests', () => {
-    const USER_TOKENS = process.env.USER_TOKENS as string;
-    const tokensArray = USER_TOKENS.split(',');
+    const tokensArray = Array.from({ length: 10 }, (_, index) => `e2e-player-${index + 1}`);
     const [
         user1Token,
         user2Token,
