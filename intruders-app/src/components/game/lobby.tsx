@@ -1,7 +1,7 @@
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import React, { useState } from "react";
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View, Share, useWindowDimensions } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Image, StyleSheet, Text, TouchableOpacity, View, Share, useWindowDimensions } from "react-native";
 import { RootStackParamList } from "../../../App";
 import { GameStateResponse } from "../../types/gameServerTypes";
 import { Background } from "../background";
@@ -26,8 +26,31 @@ export const Lobby = ({ gameState, mutate }: {
     const gameLink = `${HOST}/join/${gameState.gameId}`;
     const { player } = React.useContext(AppContext);
     const [isLoading, setIsLoading] = useState(false);
+    const waitingMessage = 'WAITING FOR PLAYERS';
+    const [visibleWaitingMessage, setVisibleWaitingMessage] = useState('');
     const userIsAGameOwner = gameState.creator === player?.id;
     const canStartTheGame = !!userIsAGameOwner && Object.keys(gameState.players).length > 4;
+    const qrSize = Math.max(82, Math.min(118, height * 0.14));
+    const titleFontSize = Math.max(14, Math.min(18, width / 25));
+    const titleTypewriterWidth = Math.min(width - 88, waitingMessage.length * titleFontSize * 0.82 + 16);
+
+    useEffect(() => {
+        setVisibleWaitingMessage('');
+        let index = 0;
+        let typingTimer: ReturnType<typeof setInterval> | undefined;
+        const startTimer = setTimeout(() => {
+            typingTimer = setInterval(() => {
+                index += 1;
+                setVisibleWaitingMessage(waitingMessage.slice(0, index));
+                if (index >= waitingMessage.length && typingTimer) clearInterval(typingTimer);
+            }, 58);
+        }, 320);
+
+        return () => {
+            clearTimeout(startTimer);
+            if (typingTimer) clearInterval(typingTimer);
+        };
+    }, []);
 
     const onShare = async () => {
         try {
@@ -66,186 +89,279 @@ export const Lobby = ({ gameState, mutate }: {
         setIsLoading(false);
     }
 
+    const PlayerSlot = ({ index }: { index: number }) => {
+        const slotPlayer = gameState.players[index];
+        const isUserPlayer = slotPlayer?.id === player?.id;
+        const isCreator = slotPlayer?.id === gameState.creator;
+
+        return (
+            <View style={[styles.playerItemContainer, isUserPlayer && styles.currentPlayerSlot]}>
+                <View style={styles.slotNumber}>
+                    <Text style={styles.slotNumberText}>{index}</Text>
+                </View>
+                <View style={styles.slotContent}>
+                    <View style={styles.nameContainer}>
+                        {isCreator && <Image source={crownIcon} style={styles.crown} />}
+                        <Text
+                            numberOfLines={1}
+                            style={[styles.playerText, !slotPlayer?.name && styles.emptyText]}
+                        >
+                            {slotPlayer?.name || 'EMPTY'}
+                        </Text>
+                    </View>
+                    {!isUserPlayer && userIsAGameOwner && !!slotPlayer?.id &&
+                        <TouchableOpacity style={styles.kickButton} onPress={() => onRemovePlayer(slotPlayer.id)}>
+                            <Text style={styles.close}>KICK</Text>
+                        </TouchableOpacity>
+                    }
+                </View>
+            </View>
+        );
+    };
+
     return (<Background>
-        {
-            !!isLoading ? <LoadingScreen /> :
-                <ScrollView contentContainerStyle={styles.outside}>
-                    <GradientPanel height={Math.max(650, Math.min(820, height - 20))} roundBottom roundTop marginTop={10} marginBottom={10}>
-                        <ComputerScreen width="100%" height={Math.max(235, Math.min(300, height * 0.34))} marginTop={8} maxWidth={520}>
-                            <View style={styles.titleContainer}>
-                                <Text style={styles.titleText}>Waiting for players to join</Text>
-                                <Text style={styles.titleCodeText}>{`Game code: `}
-                                    <Text style={styles.titleCode}>{gameState.gameId.toUpperCase().split('').join(' ')}</Text>
-                                    <AnimatedCursor /></Text>
-
-                            </View>
-                            <View style={styles.qrContainer}>
-                                <QRCodeSVG value={gameLink} bgColor={colors.screenColor} fgColor={colors.greenDigital} />
-                            </View>
-                        </ComputerScreen>
-                        <ComputerScreen width="100%" height={Math.max(230, Math.min(270, height * 0.3))} marginTop={8} maxWidth={520}>
-                            <View style={styles.playerContainer}>
-                                {
-                                    Array.from({ length: 5 }, (val, index) => index + 1).map(val => {
-                                        const index1 = val * 2 - 1;
-                                        const index2 = val * 2;
-                                        const isUser1Player = gameState.players[index1]?.id === player?.id;
-                                        const isUser2Player = gameState.players[index2]?.id === player?.id;
-                                        const PlayerElement = ({ index, isUserPlayer }: { index: number, isUserPlayer: boolean }) => {
-                                            return (<View style={styles.column}>
-
-                                                <View style={isUserPlayer ? { ...styles.playerItemContainer, borderStyle: 'dashed' } : styles.playerItemContainer}>
-                                                    <View style={styles.nameContainer}>
-                                                        <Text style={styles.playerText}>{index}</Text>
-                                                        {gameState.players[index]?.id === gameState.creator &&
-                                                            <Image source={crownIcon} style={{ height: 8, width: 8, marginLeft: 3, tintColor: colors.greenDigital }} />
-                                                        }
-                                                        {!isUserPlayer &&
-                                                            (!!gameState.players[index]?.name ?
-                                                                <Text style={styles.playerText}>
-                                                                    {gameState.players[index].name}
-                                                                </Text> : <Text style={{ ...styles.playerText, opacity: 0.3 }}>empty</Text>)
-                                                        }
-                                                        {!!isUserPlayer && <Text style={styles.playerText} numberOfLines={1}>
-                                                            {gameState.players[index]?.name}
-                                                        </Text>}
-                                                    </View>
-                                                    {
-                                                        !isUserPlayer && userIsAGameOwner && !!gameState.players[index]?.id &&
-                                                        <TouchableOpacity onPress={() => onRemovePlayer(gameState.players[index]?.id)}>
-                                                            <Text style={styles.close}>kick</Text>
-                                                        </TouchableOpacity>
-                                                    }
-
-                                                </View>
-                                            </View>);
-                                        }
-                                        return (<View style={styles.row} key={val}>
-                                            <PlayerElement index={index1} isUserPlayer={isUser1Player} />
-                                            <PlayerElement index={index2} isUserPlayer={isUser2Player} />
-                                        </View>);
-                                    })
-                                }
-                            </View>
-                        </ComputerScreen>
+        {!!isLoading ? <LoadingScreen /> :
+            <View style={styles.outside}>
+                <GradientPanel roundBottom roundTop marginTop={10} marginBottom={10}>
+                    <View style={styles.container}>
+                        <View style={styles.display}>
+                            <ComputerScreen fill>
+                                <View style={styles.screenContent}>
+                                    <View style={styles.titleContainer}>
+                                        <Text
+                                            numberOfLines={1}
+                                            style={[styles.titleText, { fontSize: titleFontSize, width: titleTypewriterWidth }]}
+                                        >
+                                            {visibleWaitingMessage}<AnimatedCursor inline />
+                                        </Text>
+                                        <Text style={styles.titleCodeText}>GAME CODE</Text>
+                                        <Text style={styles.titleCode}>
+                                            {gameState.gameId.toUpperCase().split('').join(' ')}
+                                        </Text>
+                                    </View>
+                                    <View style={styles.qrContainer}>
+                                        <View style={styles.qrFrame}>
+                                            <QRCodeSVG
+                                                value={gameLink}
+                                                size={qrSize}
+                                                bgColor={colors.screenDeep}
+                                                fgColor={colors.phosphorBright}
+                                            />
+                                        </View>
+                                    </View>
+                                    <Text style={styles.playersLabel}>PLAYER SLOTS</Text>
+                                    <View style={styles.playerContainer}>
+                                        {Array.from({ length: 5 }, (_, row) => (
+                                            <View style={styles.row} key={row}>
+                                                <PlayerSlot index={row * 2 + 1} />
+                                                <PlayerSlot index={row * 2 + 2} />
+                                            </View>
+                                        ))}
+                                    </View>
+                                </View>
+                            </ComputerScreen>
+                        </View>
                         <View style={styles.buttonsContainer}>
                             <GameButton labelBottom="Settings" isEnabled color={colors.pureWhite} size={50} onPress={() => navigation.navigate('SettingsScreen')} />
                             <GameButton labelBottom="Share join link" isEnabled color={colors.pureWhite} size={50} onPress={() => onShare()} />
-                            {/* <GameButton labelBottom="Leave the game" isEnabled color={colors.pureWhite} size={50} /> */}
                             <GameButton labelBottom="Start the game" isEnabled={canStartTheGame} color={colors.greenDigital} size={50} onPress={() => onStartGame()} />
                         </View>
-                    </GradientPanel>
-                </ScrollView>
+                    </View>
+                </GradientPanel>
+            </View>
         }
     </Background>);
 }
 
 const styles = StyleSheet.create({
     outside: {
-        alignContent: "center",
         justifyContent: 'center',
-        alignItems: 'center',
-        flexGrow: 1,
-        paddingHorizontal: 9,
-    },
-    playerContainer: {
-        alignContent: "center",
-        justifyContent: "center",
-        alignItems: "center",
-        marginTop: 5,
-        flex: 1.5,
-        width: '100%',
-        maxHeight: 300,
-    },
-    titleContainer: {
-        alignContent: "center",
-        justifyContent: 'space-around',
         alignItems: 'center',
         flex: 1,
+        width: '100%',
+        paddingHorizontal: 9,
+    },
+    container: {
+        flex: 1,
+        width: '100%',
+        minWidth: 0,
+        alignItems: 'center',
+        gap: 10,
+    },
+    display: {
+        flex: 1,
+        width: '100%',
+        minHeight: 0,
+    },
+    screenContent: {
+        flex: 1,
+        width: '100%',
+        minHeight: 0,
+        alignItems: 'center',
+        paddingHorizontal: 3,
+        paddingVertical: 2,
+    },
+    playerContainer: {
+        justifyContent: "space-between",
+        flex: 1,
+        width: '100%',
+        minHeight: 0,
+        gap: 5,
+    },
+    titleContainer: {
+        alignItems: 'center',
+        width: '100%',
+        flexShrink: 0,
     },
     qrContainer: {
-        alignContent: "center",
         justifyContent: 'center',
         alignItems: 'center',
-        flex: 2,
+        flexShrink: 1,
+        minHeight: 86,
+        paddingVertical: 7,
+    },
+    qrFrame: {
+        padding: 5,
+        borderWidth: 1,
+        borderColor: colors.phosphor,
+        backgroundColor: 'rgba(0, 8, 4, 0.72)',
+        shadowColor: colors.phosphor,
+        shadowOpacity: 0.5,
+        shadowRadius: 8,
     },
     titleText: {
-        color: colors.greenDigital,
+        color: colors.phosphorBright,
         fontFamily: 'title',
-        fontSize: 18,
         letterSpacing: 1,
+        textAlign: 'left',
+        textShadowColor: colors.phosphor,
+        textShadowRadius: 7,
     },
     titleCodeText: {
-        color: colors.greenDigital,
-        fontFamily: 'title',
-        fontSize: 13,
-        textAlign: 'center'
+        marginTop: 4,
+        color: colors.lightGray1,
+        fontFamily: 'basic',
+        fontSize: 11,
+        letterSpacing: 1.2,
+        textAlign: 'center',
     },
     titleCode: {
-        color: colors.greenDigital,
+        color: colors.phosphorBright,
         fontFamily: 'title',
-        fontSize: 14,
-        textAlign: 'center'
+        fontSize: 18,
+        letterSpacing: 2,
+        textAlign: 'center',
+        textShadowColor: colors.phosphor,
+        textShadowRadius: 6,
+    },
+    playersLabel: {
+        width: '100%',
+        marginBottom: 5,
+        color: colors.lightGray1,
+        fontFamily: 'basic',
+        fontSize: 11,
+        letterSpacing: 1.2,
+        textAlign: 'left',
     },
     row: {
         flexDirection: 'row',
-        alignContent: "center",
-        justifyContent: 'center',
-        alignItems: 'center',
         flex: 1,
         width: '100%',
-        maxWidth: 480,
-    },
-    column: {
-        alignContent: "center",
-        justifyContent: 'center',
-        alignItems: 'center',
-        flex: 1,
-        marginHorizontal: 5,
-        height: 25,
+        minHeight: 30,
+        gap: 6,
     },
     playerItemContainer: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignContent: "center",
         alignItems: "center",
         flex: 1,
-        alignSelf: 'stretch',
         borderWidth: 1,
-        borderColor: colors.greenDigital,
+        borderColor: colors.phosphor,
+        backgroundColor: 'rgba(0, 8, 4, 0.72)',
+        paddingRight: 5,
+        shadowColor: colors.phosphor,
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+    },
+    currentPlayerSlot: {
+        borderWidth: 2,
+        borderColor: colors.phosphorBright,
+        shadowOpacity: 0.7,
     },
     buttonsContainer: {
-        minHeight: 86,
+        height: 100,
+        flexShrink: 0,
         width: "100%",
         flexDirection: 'row',
-        justifyContent: 'space-around',
-        alignContent: "center",
+        justifyContent: 'center',
         alignItems: "center",
-        marginBottom: 4,
-        marginTop: 5,
+        gap: 4,
     },
     nameContainer: {
         flexDirection: 'row',
-        justifyContent: 'flex-start',
-        alignContent: "center",
         alignItems: "center",
         flex: 1,
+        width: '100%',
+        minWidth: 0,
+        paddingHorizontal: 5,
+    },
+    slotContent: {
+        flex: 1,
+        alignSelf: 'stretch',
+        minWidth: 0,
+        alignItems: 'stretch',
+        justifyContent: 'center',
+    },
+    slotNumber: {
+        alignSelf: 'stretch',
+        width: 20,
+        minWidth: 20,
+        maxWidth: 20,
+        flexShrink: 0,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRightWidth: 1,
+        borderRightColor: colors.phosphor,
+        backgroundColor: 'rgba(112, 255, 145, 0.07)',
+    },
+    slotNumberText: {
+        color: colors.phosphorBright,
+        fontFamily: 'title',
+        fontSize: 10,
+        letterSpacing: 0,
+    },
+    crown: {
+        height: 10,
+        width: 10,
+        marginRight: 4,
+        tintColor: colors.phosphorBright,
     },
     playerText: {
-        color: colors.greenDigital,
+        flexShrink: 1,
+        color: colors.phosphorBright,
         fontFamily: 'title',
-        fontSize: 14,
-        letterSpacing: 0.4,
-        marginLeft: 3,
+        fontSize: 13,
+        letterSpacing: 0.5,
+    },
+    emptyText: {
+        color: colors.lightGray2,
+        opacity: 0.52,
+    },
+    kickButton: {
+        minHeight: 17,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 4,
+        borderTopWidth: 1,
+        borderTopColor: colors.phosphor,
+        backgroundColor: 'rgba(112, 255, 145, 0.09)',
     },
     close: {
         fontFamily: 'title',
-        color: colors.greenDigital,
-        fontWeight: 'bold',
-        fontSize: 13,
-        textAlign: 'center',
-        marginLeft: 5,
-        marginRight: 3,
+        color: colors.phosphorBright,
+        fontSize: 9,
+        letterSpacing: 0.7,
+        textShadowColor: colors.phosphor,
+        textShadowRadius: 5,
     },
 
 });

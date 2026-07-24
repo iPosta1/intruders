@@ -82,6 +82,9 @@ const styles = StyleSheet.create({
         fontSize: 15,
         color: colors.greenDigital,
         marginTop: 5,
+        textShadowColor: 'rgba(124,255,155,0.85)',
+        textShadowRadius: 7,
+        textShadowOffset: { width: 0, height: 0 },
     },
     missionInfoContainer: {
         flex: 1,
@@ -103,7 +106,10 @@ const styles = StyleSheet.create({
     actionItemText: {
         fontSize: 12,
         color: colors.greenDigital,
-        textAlign: 'center'
+        textAlign: 'center',
+        textShadowColor: 'rgba(124,255,155,0.8)',
+        textShadowRadius: 5,
+        textShadowOffset: { width: 0, height: 0 },
     },
     cursor: {
         width: 8,

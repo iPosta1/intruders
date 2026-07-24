@@ -1,7 +1,7 @@
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import React, { useState } from "react";
-import { ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
+import { StyleSheet, Text, TextInput, View } from "react-native";
 import { RootStackParamList } from "../../App";
 import { Background } from "../components/background";
 import { GameButton } from "../components/shared/gameButton";
@@ -16,7 +16,6 @@ import { LoadingScreen } from "./LoadingScreen";
 export const SettingsScreen = () => {
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
     const { player, setPlayerName } = React.useContext(AppContext);
-    const { height } = useWindowDimensions();
     const { data: status, mutate, isLoading: userGameIsLoading } = useUserGameId(player?.id);
     const [isLoading, setIsLoading] = useState(false);
     const [name, setName] = useState(player?.name || '');
@@ -70,13 +69,9 @@ export const SettingsScreen = () => {
 
     const canEditName = !status?.gameId || status.status === 'WAITING_PLAYERS_TO_JOIN';
     const canSave = canEditName && !isLoading && !!name.trim() && name.trim() !== player?.name;
-    const panelHeight = Math.max(650, height - 20);
-    const logoHeight = canEditName
-        ? Math.max(270, Math.min(330, height * 0.4))
-        : Math.max(190, Math.min(240, height * 0.29));
     const identityEditor = canEditName ? (
         <View style={styles.identityScreen}>
-            <Text style={styles.screenEyebrow}>PLAYER IDENTITY</Text>
+            <Text style={styles.screenEyebrow}>CHANGE NAME</Text>
             <TextInput
                 value={name}
                 onChangeText={setName}
@@ -97,27 +92,30 @@ export const SettingsScreen = () => {
             </Text>
         </View>
     ) : undefined;
+    const gameStatusPanel = !!status?.gameId ? (
+        <View style={styles.gameStatus}>
+            <Text style={styles.gameStatusLabel}>CURRENT GAME</Text>
+            <Text style={styles.gameCode}>{status.gameId.toUpperCase()}</Text>
+            <Text style={styles.gameStatusHint}>LEAVE RETURNS YOU TO THE TITLE SCREEN</Text>
+        </View>
+    ) : undefined;
+    const screenFooter = (
+        <View style={styles.screenFooter}>
+            {identityEditor}
+            {gameStatusPanel}
+        </View>
+    );
 
     return (
         <Background>
             {userGameIsLoading ? <LoadingScreen /> :
-                <ScrollView contentContainerStyle={styles.outside}>
-                    <GradientPanel height={panelHeight} roundBottom roundTop marginTop={5} marginBottom={5}>
+                <View style={styles.outside}>
+                    <GradientPanel roundBottom roundTop marginTop={5} marginBottom={5}>
                         <View style={styles.deviceContent}>
-                            <View style={[styles.logoSlot, { height: logoHeight }]}>
-                                <LogoScreen text="Settings" footer={identityEditor} />
+                            <View style={styles.display}>
+                                <LogoScreen text="Settings" typewriter footer={screenFooter} />
                             </View>
 
-                            {!!status?.gameId && (
-                                <View style={styles.gameStatus}>
-                                    <Text style={styles.gameStatusLabel}>CURRENT GAME</Text>
-                                    <Text style={styles.gameCode}>{status.gameId.toUpperCase()}</Text>
-                                    <Text style={styles.gameStatusHint}>LEAVE RETURNS YOU TO THE TITLE SCREEN</Text>
-                                </View>
-                            )}
-
-                            <View style={styles.flexSpacer} />
-                            <View style={styles.separator} />
                             <View style={styles.controls}>
                                 {canEditName && (
                                     <GameButton
@@ -150,7 +148,7 @@ export const SettingsScreen = () => {
                             </View>
                         </View>
                     </GradientPanel>
-                </ScrollView>
+                </View>
             }
         </Background>
     );
@@ -160,7 +158,7 @@ const styles = StyleSheet.create({
     outside: {
         alignItems: 'center',
         justifyContent: 'flex-start',
-        flexGrow: 1,
+        flex: 1,
         width: '100%',
         paddingHorizontal: 9,
         paddingVertical: 5,
@@ -171,11 +169,18 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: 12,
     },
-    logoSlot: {
+    display: {
+        flex: 1,
         width: '100%',
+        minHeight: 0,
+    },
+    screenFooter: {
+        width: '100%',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        gap: 14,
     },
     identityScreen: {
-        flex: 1,
         width: '100%',
         justifyContent: 'center',
         alignItems: 'center',
@@ -250,24 +255,14 @@ const styles = StyleSheet.create({
         letterSpacing: 0.4,
         textAlign: 'center',
     },
-    flexSpacer: {
-        flex: 1,
-        minHeight: 4,
-    },
-    separator: {
-        width: '92%',
-        height: 1,
-        backgroundColor: colors.casingLight,
-        opacity: 0.55,
-    },
     controls: {
-        minHeight: 92,
+        height: 100,
+        flexShrink: 0,
         width: '100%',
         flexDirection: 'row',
         flexWrap: 'wrap',
         justifyContent: 'center',
-        alignItems: 'flex-start',
+        alignItems: 'center',
         gap: 8,
-        paddingTop: 4,
     },
 });

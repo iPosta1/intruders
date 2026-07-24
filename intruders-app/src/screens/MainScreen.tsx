@@ -1,13 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { Background } from "../components/background";
 import { AppContext } from "../context";
-import {
-    CodeField,
-    Cursor,
-    useBlurOnFulfill,
-    useClearByFocusCell,
-} from 'react-native-confirmation-code-field';
 import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../../App";
 import { StackNavigationProp } from "@react-navigation/stack";
@@ -18,24 +12,15 @@ import { GradientPanel } from "../components/shared/gradientPanel";
 import { LogoScreen } from "../components/shared/logoScreen";
 import { GameButton } from "../components/shared/gameButton";
 import { colors } from "../utils/constants";
-import { ComputerScreen } from "../components/shared/computerScreen";
 import { useSWRConfig } from "swr";
-
-const CELL_COUNT = 4;
 
 export const MainScreen = () => {
     const isFocused = useIsFocused();
     const { player } = React.useContext(AppContext);
-    const { width, height } = useWindowDimensions();
-    const cellSize = Math.max(36, Math.min(48, (width - 104) / 4));
+    const { width } = useWindowDimensions();
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
     const { mutate: mutateCache } = useSWRConfig();
     const [value, setValue] = useState('');
-    const ref = useBlurOnFulfill({ value, cellCount: CELL_COUNT });
-    const [props, getCellOnLayoutHandler] = useClearByFocusCell({
-        value,
-        setValue,
-    });
     const [isLoading, setIsLoading] = useState(false);
     const { data: userGameStatus } = useUserGameId(player?.id);
     const redirectedGameId = useRef<string | null>(null);
@@ -57,7 +42,10 @@ export const MainScreen = () => {
             if (status.ok) {
                 const createdGameId = status.data.gameId.trim().toLowerCase();
                 redirectedGameId.current = createdGameId;
-                await mutateCache(['/find-game', player?.id], status.data, { revalidate: false });
+                await Promise.all([
+                    mutateCache(['/find-game', player?.id], status.data, { revalidate: false }),
+                    mutateCache([`/status/${createdGameId}`, player?.id], status.data, { revalidate: false }),
+                ]);
                 navigation.replace('GameScreen', { gameId: createdGameId });
             }
         } finally {
@@ -73,11 +61,11 @@ export const MainScreen = () => {
             if (status.ok) {
                 const joinedGameId = status.data?.gameId?.trim().toLowerCase() || normalizedGameId;
                 redirectedGameId.current = joinedGameId;
-                await mutateCache(
-                    ['/find-game', player?.id],
-                    status.data || { gameId: joinedGameId },
-                    { revalidate: false },
-                );
+                const joinedGameState = status.data || { gameId: joinedGameId };
+                await Promise.all([
+                    mutateCache(['/find-game', player?.id], joinedGameState, { revalidate: false }),
+                    mutateCache([`/status/${joinedGameId}`, player?.id], joinedGameState, { revalidate: false }),
+                ]);
                 navigation.replace('GameScreen', { gameId: joinedGameId });
             }
         } finally {
@@ -86,59 +74,57 @@ export const MainScreen = () => {
     }
 
     const onChangeText = (input: string) => {
-        setValue(input);
-        if (input.length === 4) {
-            return onJoinGame(input);
+        const gameCode = input.replace(/[^a-zA-Z0-9]/g, '').slice(0, 4).toUpperCase();
+        setValue(gameCode);
+        if (gameCode.length === 4) {
+            return onJoinGame(gameCode);
         }
     }
+
+    const joinPanel = (
+        <View style={styles.joinGameContainer}>
+            <View style={styles.codeControl}>
+                <Text style={[styles.gameCodeText, { fontSize: Math.max(13, Math.min(17, width / 24)) }]}>
+                    ENTER 4-DIGIT GAME CODE
+                </Text>
+                <TextInput
+                    autoCapitalize="characters"
+                    autoCorrect={false}
+                    maxLength={4}
+                    placeholder="CODE"
+                    placeholderTextColor={colors.lightGray2}
+                    value={value}
+                    onChangeText={onChangeText}
+                    keyboardType="default"
+                    textContentType="name"
+                    style={styles.codeInput}
+                />
+            </View>
+        </View>
+    );
 
     return (<Background>
         {isLoading && <LoadingScreen />}
         {!isLoading &&
-            <ScrollView contentContainerStyle={styles.outside}>
-                <GradientPanel height={Math.max(410, Math.min(620, height - 20))} roundBottom roundTop marginTop={10} marginBottom={10}>
+            <View style={styles.outside}>
+                <GradientPanel roundBottom roundTop marginTop={10} marginBottom={10}>
                     <View style={styles.container}>
-                        <View style={[styles.logoSlot, { height: Math.max(128, Math.min(220, height * 0.3)) }]}>
-                            <LogoScreen text="Join the game or create a new one" />
+                        <View style={styles.display}>
+                            <LogoScreen
+                                text="Join the game or create a new one"
+                                typewriter
+                                footer={joinPanel}
+                            />
                         </View>
-                        <View style={styles.panelSection}>
-                            <ComputerScreen width="94%" maxWidth={430} height={154}>
-                                <View style={styles.joinGameContainer}>
-                                <Text style={[styles.gameCodeText, { fontSize: Math.max(13, Math.min(17, width / 24)) }]}>ENTER 4-DIGIT GAME CODE</Text>
-                                <View style={styles.joinGameInput}>
-
-                                    <CodeField
-                                        ref={ref}
-                                        {...props}
-                                        // Use `caretHidden={false}` when users can't paste a text value, because context menu doesn't appear
-                                        value={value}
-                                        onChangeText={onChangeText}
-                                        cellCount={CELL_COUNT}
-                                        rootStyle={styles.codeFieldRoot}
-                                        keyboardType="default"
-                                        textContentType="name"
-                                        renderCell={({ index, symbol, isFocused }) => (
-                                            <Text
-                                                key={index}
-                                            style={[styles.cell, { width: cellSize, height: cellSize + 4, lineHeight: cellSize, fontSize: cellSize * 0.44 }, isFocused && styles.focusCell]}
-                                                onLayout={getCellOnLayoutHandler(index)}>
-                                                {symbol || (isFocused ? <Cursor /> : null)}
-                                            </Text>
-                                        )}
-                                    />
-                                </View>
-                                </View>
-                            </ComputerScreen>
-                            <View style={styles.button}>
-                                <GameButton color={colors.amber} size={50} isEnabled labelBottom="Settings"
-                                    onPress={() => navigation.navigate('SettingsScreen')} />
-                                <GameButton color={colors.greenDigital} size={54} isEnabled labelBottom="Create game"
-                                    onPress={() => onCreateGame()} />
-                            </View>
+                        <View style={styles.buttonArea}>
+                            <GameButton color={colors.amber} size={50} isEnabled labelBottom="Settings"
+                                onPress={() => navigation.navigate('SettingsScreen')} />
+                            <GameButton color={colors.greenDigital} size={54} isEnabled labelBottom="Create game"
+                                onPress={() => onCreateGame()} />
                         </View>
                     </View>
                 </GradientPanel>
-            </ScrollView>
+            </View>
         }
 
     </Background>);
@@ -149,64 +135,66 @@ const styles = StyleSheet.create({
         alignContent: "center",
         justifyContent: 'center',
         alignItems: 'center',
-        flexGrow: 1,
+        flex: 1,
+        width: '100%',
         paddingHorizontal: 9,
     },
     container: {
         alignContent: "center",
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
         alignItems: 'center',
         flex: 1,
+        width: '100%',
+        minWidth: 0,
+        gap: 10,
     },
-    panelSection: {
-        alignContent: "center",
-        justifyContent: 'center',
-        alignItems: 'center',
+    display: {
         flex: 1,
-        gap: 8,
-    },
-    logoSlot: {
-        width: "100%",
+        width: '100%',
+        minHeight: 0,
     },
     joinGameContainer: {
         justifyContent: "center",
         alignItems: "center",
         width: "100%",
     },
-    joinGameInput: {
-        flexDirection: 'row',
-        justifyContent: "center",
-        alignContent: 'center',
+    codeControl: {
+        width: '90%',
+        maxWidth: 340,
+        alignItems: 'stretch',
     },
-    button: {
+    buttonArea: {
+        alignSelf: 'stretch',
+        height: 100,
+        flexShrink: 0,
         flexDirection: 'row',
         justifyContent: "center",
-        alignContent: 'center',
+        alignItems: 'center',
+        gap: 8,
     },
     gameCodeText: {
+        alignSelf: 'stretch',
         color: colors.lightGray1,
         fontSize: 18,
         letterSpacing: 1.2,
         fontFamily: 'title',
+        textAlign: 'left',
     },
-    root: { flex: 1, padding: 20 },
-    title: { textAlign: 'center', fontSize: 30 },
-    codeFieldRoot: { marginTop: 5 },
-    cell: {
-        width: 50,
-        height: 60,
-        lineHeight: 36,
-        fontSize: 24,
-        borderWidth: 2,
-        borderColor: colors.lightGray1,
-        backgroundColor: colors.screenColor,
-        textAlign: 'center',
+    codeInput: {
+        alignSelf: 'stretch',
+        marginTop: 8,
+        borderWidth: 1,
+        borderColor: colors.phosphor,
+        backgroundColor: 'rgba(0, 8, 4, 0.72)',
+        color: colors.phosphorBright,
         fontFamily: 'title',
-        fontWeight: 'bold',
-        color: colors.greenDigital,
-        marginHorizontal: 4,
-    },
-    focusCell: {
-        borderColor: colors.greenDigital,
+        fontSize: 24,
+        letterSpacing: 9,
+        paddingVertical: 11,
+        paddingHorizontal: 12,
+        textAlign: 'center',
+        shadowColor: colors.phosphor,
+        shadowOpacity: 0.55,
+        shadowRadius: 8,
     },
 });

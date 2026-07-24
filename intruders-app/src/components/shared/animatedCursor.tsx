@@ -1,12 +1,13 @@
 import React, { useEffect, useRef } from "react";
-import { Animated, StyleSheet, ViewStyle } from "react-native";
+import { Animated, StyleSheet, TextStyle, ViewStyle } from "react-native";
 import { colors } from "../../utils/constants";
 
 type AnimatedCursorProps = {
-    style?: ViewStyle,
+    style?: ViewStyle | TextStyle,
+    inline?: boolean,
 }
 
-export const AnimatedCursor = ({ style }: AnimatedCursorProps) => {
+export const AnimatedCursor = ({ style, inline = false }: AnimatedCursorProps) => {
 
     const opacityAnimationValue = useRef(new Animated.Value(0)).current;
 
@@ -29,6 +30,9 @@ export const AnimatedCursor = ({ style }: AnimatedCursorProps) => {
         return () => animation.stop();
     }, [opacityAnimationValue]);
 
+    if (inline) {
+        return <Animated.Text style={[styles.inlineCursor, style as TextStyle, { opacity: opacityAnimationValue }]}>█</Animated.Text>;
+    }
     return (<Animated.View style={style ? {...style, opacity: opacityAnimationValue} :  {...styles.cursor,  opacity: opacityAnimationValue}} />);
 }
 
@@ -42,5 +46,11 @@ const styles = StyleSheet.create({
         shadowRadius: 1,
         marginTop: 2,
         marginLeft: 3,
+    },
+    inlineCursor: {
+        color: colors.greenDigital,
+        fontFamily: 'title',
+        textShadowColor: colors.greenDigital,
+        textShadowRadius: 4,
     },
 });

@@ -24,11 +24,11 @@ export const JoinScreen = ({ route }: Props) => {
             POST('/join-game', { gameId: normalizedGameId }).then(async status => {
                 if (status.ok) {
                     const joinedGameId = status.data?.gameId?.trim().toLowerCase() || normalizedGameId;
-                    await mutateCache(
-                        ['/find-game', player.id],
-                        status.data || { gameId: joinedGameId },
-                        { revalidate: false },
-                    );
+                    const joinedGameState = status.data || { gameId: joinedGameId };
+                    await Promise.all([
+                        mutateCache(['/find-game', player.id], joinedGameState, { revalidate: false }),
+                        mutateCache([`/status/${joinedGameId}`, player.id], joinedGameState, { revalidate: false }),
+                    ]);
                     navigation.replace('GameScreen', { gameId: joinedGameId });
                 } else {
                     navigation.replace('MainScreen');

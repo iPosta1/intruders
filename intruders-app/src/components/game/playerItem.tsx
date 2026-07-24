@@ -111,6 +111,10 @@ const styles = StyleSheet.create({
         borderWidth: 3,
         borderColor: colors.phosphorBright,
         backgroundColor: 'rgba(87, 255, 132, 0.08)',
+        shadowColor: colors.phosphor,
+        shadowOpacity: 0.72,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 0 },
     },
     horizontalPlayerItem: {
         flexDirection: 'row',
@@ -124,7 +128,8 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         flexWrap: 'nowrap',
         textShadowColor: colors.phosphor,
-        textShadowRadius: 2,
+        textShadowRadius: 6,
+        textShadowOffset: { width: 0, height: 0 },
     },
     horizontalPlayerName: {
         flexShrink: 1,

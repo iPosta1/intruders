@@ -31,7 +31,11 @@ export const GameButton = ({ size, color, isEnabled = false, onPress, onPressIn,
             indicator && styles.indicatorWrapper,
             { width: indicator ? size : Math.max(size, 58) },
         ]}>
-            <LinearGradient colors={['#495149', '#101410', '#030403']} style={[styles.socket, { width: size, height: size, borderRadius: round ? size : 9 }]}>
+            <LinearGradient
+                colors={indicator ? ['#6c746a', '#171b17', '#010201'] : ['#697168', '#242a24', '#050705', '#010201']}
+                locations={indicator ? [0, 0.45, 1] : [0, 0.34, 0.72, 1]}
+                style={[styles.socket, indicator && styles.indicatorSocket, { width: size, height: size, borderRadius: round ? size : 9 }]}
+            >
                 <Pressable
                     accessibilityRole={interactive ? 'button' : undefined}
                     accessibilityLabel={labelBottom}
@@ -49,11 +53,14 @@ export const GameButton = ({ size, color, isEnabled = false, onPress, onPressIn,
                             opacity: isEnabled ? 0.96 : 0.2,
                             transform: [{ translateY: pressed ? 2 : 0 }],
                             shadowColor: isEnabled ? color : '#000',
-                            shadowOpacity: isEnabled ? 0.65 : 0.15,
+                            shadowOpacity: isEnabled ? 0.82 : 0.15,
                         },
+                        indicator && styles.indicatorButton,
                     ]}
                 >
+                    <View style={[styles.faceRim, { borderRadius: round ? size : 4 }]} />
                     <View style={[styles.gloss, { borderRadius: round ? size : 4 }]} />
+                    <View style={[styles.lowerShade, { borderRadius: round ? size : 4 }]} />
                 </Pressable>
             </LinearGradient>
             {!!labelBottom && <Text numberOfLines={2} style={[styles.label, { fontSize: responsiveLabel }]}>{labelBottom.toUpperCase()}</Text>}
@@ -72,11 +79,19 @@ const styles = StyleSheet.create({
         padding: 5,
         marginHorizontal: 3,
         borderRadius: 11,
-        backgroundColor: '#141914',
+        backgroundColor: '#0b0e0b',
         borderTopWidth: 1,
-        borderTopColor: '#4d574e',
-        borderBottomWidth: 2,
-        borderBottomColor: '#030403',
+        borderTopColor: '#5f695f',
+        borderLeftWidth: 1,
+        borderLeftColor: '#343b34',
+        borderRightWidth: 2,
+        borderRightColor: '#020302',
+        borderBottomWidth: 3,
+        borderBottomColor: '#010201',
+        shadowColor: '#000',
+        shadowOpacity: 0.75,
+        shadowRadius: 6,
+        shadowOffset: { width: 0, height: 4 },
     },
     socket: {
         alignItems: 'center',
@@ -84,22 +99,62 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderTopColor: '#737b70',
         borderBottomColor: '#000',
+        shadowColor: '#000',
+        shadowOpacity: 0.85,
+        shadowRadius: 5,
+        shadowOffset: { width: 0, height: 3 },
+    },
+    indicatorSocket: {
+        borderWidth: 1,
+        borderTopColor: '#8a9286',
+        borderLeftColor: '#535b52',
+        borderRightColor: '#060806',
+        borderBottomColor: '#000',
     },
     button: {
         alignItems: 'center',
         justifyContent: 'flex-start',
         overflow: 'hidden',
         borderWidth: 1,
-        borderTopColor: 'rgba(255,255,255,0.65)',
-        borderBottomColor: 'rgba(0,0,0,0.75)',
-        shadowRadius: 9,
-        elevation: 5,
+        borderTopColor: 'rgba(255,255,255,0.76)',
+        borderLeftColor: 'rgba(255,255,255,0.25)',
+        borderRightColor: 'rgba(0,0,0,0.55)',
+        borderBottomColor: 'rgba(0,0,0,0.90)',
+        shadowRadius: 11,
+        shadowOffset: { width: 0, height: 3 },
+        elevation: 7,
+    },
+    indicatorButton: {
+        borderWidth: 1,
+        shadowRadius: 7,
+        shadowOffset: { width: 0, height: 1 },
     },
     gloss: {
+        position: 'absolute',
+        top: 2,
+        left: '7%',
         width: '86%',
-        height: '42%',
+        height: '40%',
         marginTop: 2,
-        backgroundColor: 'rgba(255,255,255,0.24)',
+        backgroundColor: 'rgba(255,255,255,0.30)',
+    },
+    faceRim: {
+        position: 'absolute',
+        top: 1,
+        right: 1,
+        bottom: 1,
+        left: 1,
+        borderWidth: 1,
+        borderTopColor: 'rgba(255,255,255,0.22)',
+        borderBottomColor: 'rgba(0,0,0,0.48)',
+    },
+    lowerShade: {
+        position: 'absolute',
+        left: '5%',
+        right: '5%',
+        bottom: 1,
+        height: '30%',
+        backgroundColor: 'rgba(0,0,0,0.18)',
     },
     label: {
         minHeight: 23,
@@ -108,5 +163,8 @@ const styles = StyleSheet.create({
         fontFamily: 'basic',
         letterSpacing: 0.7,
         textAlign: 'center',
+        textShadowColor: 'rgba(124,255,155,0.55)',
+        textShadowRadius: 4,
+        textShadowOffset: { width: 0, height: 0 },
     },
 });

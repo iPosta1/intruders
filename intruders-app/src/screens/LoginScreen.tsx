@@ -11,31 +11,41 @@ export const LoginScreen = () => {
     const [name, setName] = useState('');
     const { setPlayerName } = React.useContext(AppContext);
     const normalizedName = name.trim();
+    const submitName = () => normalizedName && setPlayerName(normalizedName);
 
     return (
         <Background>
             <View style={styles.outside}>
                 <GradientPanel roundBottom roundTop marginTop={10} marginBottom={10}>
                     <View style={styles.container}>
-                        <LogoScreen text="What should we call you?" />
-                        <TextInput
-                            autoFocus
-                            maxLength={16}
-                            placeholder="Your name"
-                            placeholderTextColor={colors.lightGray2}
-                            value={name}
-                            onChangeText={setName}
-                            onSubmitEditing={() => normalizedName && setPlayerName(normalizedName)}
-                            style={styles.input}
-                        />
-                        <GameButton
-                            color={colors.greenDigital}
-                            size={50}
-                            isEnabled={!!normalizedName}
-                            labelBottom="Continue"
-                            labelSize={12}
-                            onPress={() => setPlayerName(normalizedName)}
-                        />
+                        <View style={styles.display}>
+                            <LogoScreen
+                                text="What should we call you?"
+                                typewriter
+                                footer={
+                                    <TextInput
+                                        autoFocus
+                                        maxLength={16}
+                                        placeholder="YOUR NAME"
+                                        placeholderTextColor={colors.lightGray2}
+                                        value={name}
+                                        onChangeText={setName}
+                                        onSubmitEditing={submitName}
+                                        style={styles.input}
+                                    />
+                                }
+                            />
+                        </View>
+                        <View style={styles.buttonArea}>
+                            <GameButton
+                                color={colors.greenDigital}
+                                size={50}
+                                isEnabled={!!normalizedName}
+                                labelBottom="Continue"
+                                labelSize={12}
+                                onPress={submitName}
+                            />
+                        </View>
                     </View>
                 </GradientPanel>
             </View>
@@ -46,7 +56,7 @@ export const LoginScreen = () => {
 const styles = StyleSheet.create({
     outside: {
         alignContent: 'center',
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
         alignItems: 'center',
         flex: 1,
         width: '100%',
@@ -58,18 +68,35 @@ const styles = StyleSheet.create({
         flex: 1,
         width: '100%',
         minWidth: 0,
-        gap: 24,
+        gap: 10,
+    },
+    display: {
+        flex: 1,
+        width: '100%',
+        minHeight: 0,
+    },
+    buttonArea: {
+        width: '100%',
+        height: 94,
+        flexShrink: 0,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     input: {
-        width: '82%',
-        maxWidth: 280,
-        borderWidth: 2,
-        borderColor: colors.greenDigital,
-        backgroundColor: colors.screenColor,
-        color: colors.greenDigital,
+        width: '90%',
+        maxWidth: 340,
+        borderWidth: 1,
+        borderColor: colors.phosphor,
+        backgroundColor: 'rgba(0, 8, 4, 0.72)',
+        color: colors.phosphorBright,
         fontFamily: 'title',
-        fontSize: 18,
-        padding: 12,
+        fontSize: 20,
+        letterSpacing: 1.2,
+        paddingVertical: 11,
+        paddingHorizontal: 12,
         textAlign: 'center',
+        shadowColor: colors.phosphor,
+        shadowOpacity: 0.55,
+        shadowRadius: 8,
     },
 });

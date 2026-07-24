@@ -91,6 +91,9 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         alignContent: 'center',
+        textShadowColor: 'rgba(124,255,155,0.75)',
+        textShadowRadius: 6,
+        textShadowOffset: { width: 0, height: 0 },
     },
     compactRejectionsLabel: {
         fontSize: 14,
