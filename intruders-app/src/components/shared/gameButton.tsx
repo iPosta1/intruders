@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useRef } from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../../utils/constants';
@@ -14,22 +14,34 @@ type Props = {
     round?: boolean;
     labelBottom?: string;
     indicator?: boolean;
+    sustainPressOnTouch?: boolean;
 };
 
 export const GameButtonGroup = ({ children }: { children: ReactNode }) => (
     <View style={styles.group}>{children}</View>
 );
 
-export const GameButton = ({ size, color, isEnabled = false, onPress, onPressIn, onPressOut, round, labelBottom, labelSize, indicator = false }: Props) => {
+export const GameButton = ({ size, color, isEnabled = false, onPress, onPressIn, onPressOut, round, labelBottom, labelSize, indicator = false, sustainPressOnTouch = false }: Props) => {
     const { width } = useWindowDimensions();
-    const responsiveLabel = labelSize || Math.max(11, Math.min(13, width / 32));
+    const responsiveLabel = labelSize || Math.max(10, Math.min(13, width / 32));
     const interactive = isEnabled && !!(onPress || onPressIn || onPressOut);
+    const activeTouch = useRef(false);
+    const releaseTouch = () => {
+        if (!activeTouch.current) return;
+        activeTouch.current = false;
+        onPressOut?.();
+    };
 
     return (
         <View style={[
             styles.wrapper,
             indicator && styles.indicatorWrapper,
-            { width: indicator ? size : Math.max(size, 58) },
+            sustainPressOnTouch && ({
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
+                WebkitTouchCallout: 'none',
+            } as any),
+            { width: indicator ? size : Math.max(size, width <= 390 ? 54 : 58) },
         ]}>
             <LinearGradient
                 colors={indicator ? ['#6c746a', '#171b17', '#010201'] : ['#697168', '#242a24', '#050705', '#010201']}
@@ -42,9 +54,25 @@ export const GameButton = ({ size, color, isEnabled = false, onPress, onPressIn,
                     disabled={!interactive}
                     onPress={onPress}
                     onPressIn={onPressIn}
-                    onPressOut={onPressOut}
+                    onPressOut={() => {
+                        if (!sustainPressOnTouch || !activeTouch.current) {
+                            onPressOut?.();
+                        }
+                    }}
+                    onTouchStart={sustainPressOnTouch ? () => {
+                        activeTouch.current = true;
+                        onPressIn?.();
+                    } : undefined}
+                    onTouchEnd={sustainPressOnTouch ? releaseTouch : undefined}
+                    onTouchCancel={sustainPressOnTouch ? releaseTouch : undefined}
                     style={({ pressed }) => [
                         styles.button,
+                        sustainPressOnTouch && ({
+                            touchAction: 'none',
+                            userSelect: 'none',
+                            WebkitUserSelect: 'none',
+                            WebkitTouchCallout: 'none',
+                        } as any),
                         {
                             width: size - 10,
                             height: size - 10,
@@ -63,13 +91,13 @@ export const GameButton = ({ size, color, isEnabled = false, onPress, onPressIn,
                     <View style={[styles.lowerShade, { borderRadius: round ? size : 4 }]} />
                 </Pressable>
             </LinearGradient>
-            {!!labelBottom && <Text numberOfLines={2} style={[styles.label, { fontSize: responsiveLabel }]}>{labelBottom.toUpperCase()}</Text>}
+            {!!labelBottom && <Text selectable={false} numberOfLines={2} style={[styles.label, { fontSize: responsiveLabel }]}>{labelBottom.toUpperCase()}</Text>}
         </View>
     );
 };
 
 const styles = StyleSheet.create({
-    wrapper: { alignItems: 'center', marginHorizontal: 4, marginBottom: 7 },
+    wrapper: { alignItems: 'center', marginHorizontal: 3, marginBottom: 0, flexShrink: 1 },
     indicatorWrapper: {
         marginHorizontal: 0,
         marginBottom: 0,
@@ -157,8 +185,9 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0,0,0,0.18)',
     },
     label: {
-        minHeight: 23,
-        marginTop: 5,
+        minHeight: 25,
+        marginTop: 4,
+        lineHeight: 13,
         color: colors.phosphorBright,
         fontFamily: 'basic',
         letterSpacing: 0.7,

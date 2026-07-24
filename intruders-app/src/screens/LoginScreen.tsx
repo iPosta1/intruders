@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { Keyboard, Platform, StyleSheet, TextInput, View } from 'react-native';
 import { Background } from '../components/background';
 import { GameButton } from '../components/shared/gameButton';
 import { GradientPanel } from '../components/shared/gradientPanel';
@@ -9,9 +9,44 @@ import { colors } from '../utils/constants';
 
 export const LoginScreen = () => {
     const [name, setName] = useState('');
+    const inputRef = useRef<TextInput>(null);
+    const submitting = useRef(false);
     const { setPlayerName } = React.useContext(AppContext);
     const normalizedName = name.trim();
-    const submitName = () => normalizedName && setPlayerName(normalizedName);
+    const submitName = () => {
+        if (!normalizedName || submitting.current) {
+            return;
+        }
+
+        submitting.current = true;
+        inputRef.current?.blur();
+        Keyboard.dismiss();
+
+        const finish = () => {
+            // iOS Chrome can retain the keyboard-sized visual viewport when a
+            // focused input is unmounted during navigation. Let the keyboard
+            // close first, then force layout to read the restored viewport.
+            if (Platform.OS === 'web' && typeof window !== 'undefined') {
+                window.scrollTo(0, 0);
+                window.dispatchEvent(new Event('resize'));
+            }
+
+            setPlayerName(normalizedName);
+
+            if (Platform.OS === 'web' && typeof window !== 'undefined') {
+                window.requestAnimationFrame(() => {
+                    window.scrollTo(0, 0);
+                    window.dispatchEvent(new Event('resize'));
+                });
+            }
+        };
+
+        if (Platform.OS === 'web') {
+            window.setTimeout(finish, 350);
+        } else {
+            finish();
+        }
+    };
 
     return (
         <Background>
@@ -24,6 +59,7 @@ export const LoginScreen = () => {
                                 typewriter
                                 footer={
                                     <TextInput
+                                        ref={inputRef}
                                         autoFocus
                                         maxLength={16}
                                         placeholder="YOUR NAME"

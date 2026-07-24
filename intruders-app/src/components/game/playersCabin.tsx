@@ -28,7 +28,7 @@ export const PlayersCabin = ({ gameState, showRoles, mutateGame, embedded = fals
         ? 1
         : oneRowItemWidth >= 78
         ? count
-        : width < 370 ? 2 : width < 600 ? 3 : Math.min(5, count);
+        : width < 330 ? 2 : width < 600 ? 3 : Math.min(5, count);
     const rows = Math.ceil(count / columns);
     const showStatusBar = gridHeightWithHeader >= rows * 48;
     const gridHeight = Math.max(80, embeddedHeight - (showStatusBar ? 44 : 12));
@@ -38,13 +38,13 @@ export const PlayersCabin = ({ gameState, showRoles, mutateGame, embedded = fals
     const itemWidth = onePlayerPerRow
         ? Math.min(380, Math.floor(cellWidth) - 16)
         : Math.max(64, Math.floor(cellWidth) - 10);
-    const itemHeight = Math.max(48, Math.min(onePlayerPerRow ? 140 : 112, Math.floor(cellHeight) - 6));
+    const itemHeight = Math.max(40, Math.min(onePlayerPerRow ? 140 : 112, Math.floor(cellHeight) - 4));
     const iconSize = Math.max(
-        onePlayerPerRow ? 30 : 26,
+        onePlayerPerRow ? 30 : 22,
         Math.min(onePlayerPerRow ? 56 : 50, itemHeight - 28, itemWidth - 18),
     );
     const nameSize = Math.max(
-        onePlayerPerRow ? 12 : 11,
+        onePlayerPerRow ? 12 : 10,
         Math.min(onePlayerPerRow ? 20 : 17, Math.floor(Math.min(itemWidth / 5.6, itemHeight / 5))),
     );
     return (<GradientPanel embedded={embedded} height={embedded ? embeddedHeight : panelHeight} marginTop={embedded ? 0 : 5} roundTop>

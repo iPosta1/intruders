@@ -4,6 +4,7 @@ import { KeyedMutator } from "swr";
 import { GameStateResponse, GAME_STATUS } from "../types/gameServerTypes";
 import { colors } from "../utils/constants";
 import { getMissionSpecification } from "../utils/game";
+import { useVisualViewportHeight } from "../utils/useVisualViewportHeight";
 import { Background } from "./background";
 import { ButtonsCabin } from "./game/buttonsCabin";
 import { InfoCabin } from "./game/infoCabin";
@@ -14,9 +15,10 @@ import { GradientPanel } from "./shared/gradientPanel";
 export const Game = ({ gameState, mutate }: { gameState: GameStateResponse, mutate: KeyedMutator<GameStateResponse> }) => {
     const [showRoles, setShowRoles] = useState(false);
     const { height } = useWindowDimensions();
-    const playerCount = Object.keys(gameState.players).length;
-    const missionsHeight = 174;
-    const infoHeight = 116;
+    const viewportHeight = useVisualViewportHeight(height);
+    const shortViewport = viewportHeight < 760;
+    const missionsHeight = shortViewport ? 158 : 174;
+    const infoHeight = shortViewport ? 104 : 116;
     const missionSpec = getMissionSpecification(gameState);
     const canSendTeam =
         gameState.leader === gameState.playerIndex &&
@@ -26,17 +28,26 @@ export const Game = ({ gameState, mutate }: { gameState: GameStateResponse, muta
         gameState.playerAction === GAME_STATUS.APPROVE_OR_REJECT_PLAYERS ||
         gameState.playerAction === GAME_STATUS.ACT_MISSON ||
         canSendTeam;
-    const controlsHeight = hasContextualControls ? 104 : 84;
+    // Exactly fit the physical button plus its two-line label. Contextual
+    // controls have a shallow group socket, so they need ten extra pixels.
+    const controlsHeight = hasContextualControls
+        ? (shortViewport ? 84 : 92)
+        : (shortViewport ? 74 : 82);
     const bottomSectionsHeight = missionsHeight + infoHeight + controlsHeight;
-    const panelChromeAndGaps = 94;
-    const minimumPlayersHeight = playerCount > 6 ? 250 : 210;
-    // Include the ScrollView padding and panel margins in the viewport budget.
-    const deviceHeight = Math.max(height - 20, bottomSectionsHeight + panelChromeAndGaps + minimumPlayersHeight);
-    const playersHeight = deviceHeight - bottomSectionsHeight - panelChromeAndGaps;
+    // Compact outer panel padding/borders (37), separators (3), and gaps (36).
+    const panelChromeAndGaps = 76;
+    // iOS reports a layout viewport that can extend underneath Chrome's bottom
+    // toolbar. Size the console from the visual viewport so the entire controls
+    // section, including labels, remains visible without scrolling.
+    const deviceHeight = Math.max(540, viewportHeight - 30);
+    const availablePlayersHeight = deviceHeight - bottomSectionsHeight - panelChromeAndGaps;
+    // The player display is the flexible section. It consumes every spare pixel
+    // so unused height can never accumulate around the bottom controls.
+    const playersHeight = Math.max(150, availablePlayersHeight);
 
     return (<Background>
         <ScrollView contentContainerStyle={styles.container}>
-            <GradientPanel height={deviceHeight} roundTop roundBottom marginTop={5} marginBottom={5}>
+            <GradientPanel compactBottom height={deviceHeight} roundTop roundBottom marginTop={5} marginBottom={5}>
                 <View style={styles.deviceContent}>
                     <PlayersCabin embedded sectionHeight={playersHeight} gameState={gameState} showRoles={showRoles} mutateGame={mutate} />
                     <View style={styles.separator} />

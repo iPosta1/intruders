@@ -23,7 +23,7 @@ type ButtonsCabinProps = {
 export const ButtonsCabin = ({ gameState, setShowRoles, mutateGame, showRoles, embedded = false, sectionHeight }: ButtonsCabinProps) => {
     const missionSpec = getMissionSpecification(gameState);
     const { width, height } = useWindowDimensions();
-    const buttonSize = width <= 360 || height <= 640 ? 44 : 48;
+    const buttonSize = width <= 390 || height <= 720 ? 42 : 48;
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
     const [approvalLoading, setApprovalLoading] = useState(false);
     const [actionLoading, setActionLoading] = useState(false);
@@ -63,6 +63,7 @@ export const ButtonsCabin = ({ gameState, setShowRoles, mutateGame, showRoles, e
             <GameButton labelBottom="Settings" round size={buttonSize} color={'#fff'}
                 isEnabled onPress={() => navigation.navigate('SettingsScreen')} />
             <GameButton labelBottom="Show your role" size={buttonSize} color={showRoles ? 'orange' : colors.pureWhite} isEnabled
+                sustainPressOnTouch
                 onPressIn={() => setShowRoles(true)}
                 onPressOut={() => setShowRoles(false)}/>
             {canVote && <GameButtonGroup>
@@ -88,9 +89,10 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'flex-start',
         flexDirection: 'row',
-        marginBottom: 5,
-        paddingTop: 10,
-        flexWrap: 'wrap',
+        marginBottom: 0,
+        paddingTop: 0,
+        paddingBottom: 0,
+        flexWrap: 'nowrap',
         width: "100%",
         flex: 1,
         gap: 4,

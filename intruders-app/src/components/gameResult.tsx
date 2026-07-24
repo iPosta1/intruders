@@ -13,6 +13,7 @@ import { RootStackParamList } from "../../App";
 import { DELETE } from "../utils/fetch";
 import { useSWRConfig } from "swr";
 import { AppContext } from "../context";
+import { useVisualViewportHeight } from "../utils/useVisualViewportHeight";
 
 export const GameResult = ({ gameState }: { gameState: GameStateResponse }) => {
 
@@ -20,8 +21,15 @@ export const GameResult = ({ gameState }: { gameState: GameStateResponse }) => {
     const { mutate } = useSWRConfig();
     const { player } = React.useContext(AppContext);
     const { height } = useWindowDimensions();
+    const viewportHeight = useVisualViewportHeight(height);
     const [isLeaving, setIsLeaving] = useState(false);
     const winner = gameState.finished.winner === ROLE.SPY ? 'ALIEN SPIES' : 'HUMAN RESISTANCE';
+    const shortViewport = viewportHeight < 760;
+    const buttonSize = shortViewport ? 46 : 50;
+    const buttonHeight = buttonSize + 30;
+    const deviceHeight = Math.max(540, viewportHeight - 30);
+    // Compact panel chrome (37), screen margins (20), and the exact button area.
+    const screenHeight = Math.max(300, deviceHeight - buttonHeight - 57);
 
     const exitResult = async () => {
         if (isLeaving) return;
@@ -42,8 +50,8 @@ export const GameResult = ({ gameState }: { gameState: GameStateResponse }) => {
     return (
         <Background>
             <ScrollView contentContainerStyle={styles.container}>
-                <GradientPanel height={Math.max(620, Math.min(820, height - 18))} marginTop={5} marginBottom={5} roundTop roundBottom>
-                    <ComputerScreen width="100%" height={Math.max(480, Math.min(650, height - 150))} marginTop={8} marginBottom={12} maxWidth={520}>
+                <GradientPanel compactBottom height={deviceHeight} marginTop={5} marginBottom={5} roundTop roundBottom>
+                    <ComputerScreen width="100%" height={screenHeight} marginTop={8} marginBottom={12} maxWidth={520}>
                         <View style={styles.screenContainer}>
                             <View style={styles.screenItem}>
                                 <View style={styles.screenItem}>
@@ -82,10 +90,10 @@ export const GameResult = ({ gameState }: { gameState: GameStateResponse }) => {
                             </View>
                         </View>
                     </ComputerScreen>
-                    <View style={styles.button}>
+                    <View style={[styles.button, { height: buttonHeight }]}>
                         <GameButton
-                            labelBottom={isLeaving ? "Exiting…" : "Exit results"}
-                            size={50}
+                            labelBottom={isLeaving ? "Exiting..." : "Exit results"}
+                            size={buttonSize}
                             labelSize={13}
                             color={colors.amber}
                             isEnabled={!isLeaving}
@@ -107,7 +115,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: 9,
     },
     button: {
-        height: 100,
+        alignItems: 'center',
+        justifyContent: 'flex-start',
     },
     screenContainer: {
         alignContent: "center",

@@ -96,7 +96,6 @@ export const SettingsScreen = () => {
         <View style={styles.gameStatus}>
             <Text style={styles.gameStatusLabel}>CURRENT GAME</Text>
             <Text style={styles.gameCode}>{status.gameId.toUpperCase()}</Text>
-            <Text style={styles.gameStatusHint}>LEAVE RETURNS YOU TO THE TITLE SCREEN</Text>
         </View>
     ) : undefined;
     const screenFooter = (

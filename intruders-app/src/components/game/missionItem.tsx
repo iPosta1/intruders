@@ -28,7 +28,7 @@ export const MissionItem = ({ missionNumber, gameState }: {
                             style={{ ...styles.actionItem, borderColor: isFailure ? colors.red : colors.greenDigital }}
                         >
                             <Text style={{ ...styles.actionText, color: isFailure ? colors.red : colors.greenDigital }}>
-                                {isFailure ? "X" : action === MISSION_ACTION.SUCCESS ? "OK" : "?"}
+                                {isFailure ? "X" : action === MISSION_ACTION.SUCCESS ? "V" : "?"}
                             </Text>
                         </View>
                     );
@@ -104,18 +104,20 @@ const styles = StyleSheet.create({
         alignItems: "center",
         marginTop: 2,
         width: 50,
-        height: 18,
+        height: 14,
     },
     actionItem: {
-        minWidth: 18,
-        height: 18,
+        width: 10,
+        minWidth: 10,
+        height: 14,
         borderWidth: 1,
         alignContent: "center",
         justifyContent: "center",
         alignItems: "center",
     },
     actionText: {
-        fontSize: 11,
+        fontSize: 8,
+        lineHeight: 9,
         fontFamily: "title",
         textAlign: "center",
         textShadowColor: 'rgba(124,255,155,0.75)',

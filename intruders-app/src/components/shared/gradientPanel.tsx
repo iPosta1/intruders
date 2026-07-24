@@ -12,9 +12,10 @@ type Props = {
     roundTop?: boolean;
     roundBottom?: boolean;
     embedded?: boolean;
+    compactBottom?: boolean;
 };
 
-export const GradientPanel = ({ children, height, marginTop = 0, marginBottom = 0, reverse, embedded = false }: Props) => {
+export const GradientPanel = ({ children, height, marginTop = 0, marginBottom = 0, reverse, embedded = false, compactBottom = false }: Props) => {
     const { width } = useWindowDimensions();
     if (embedded) {
         return <View style={{ width: '100%', height, marginTop, marginBottom, alignItems: 'center' }}>{children}</View>;
@@ -23,12 +24,12 @@ export const GradientPanel = ({ children, height, marginTop = 0, marginBottom = 
         <View style={[styles.shadow, { width: Math.max(0, Math.min(width - 18, 560)), height, marginTop, marginBottom, flex: height ? undefined : 1 }]}>
             <LinearGradient
                 colors={reverse ? [colors.casingMid, colors.casingDark] : [colors.casingLight, colors.casingMid, colors.casingDark]}
-                style={styles.panel}
+                style={[styles.panel, compactBottom && styles.compactPanelBottom]}
             >
                 <View style={styles.highlight} />
                 <View pointerEvents="none" style={styles.shoulderShade} />
                 <View style={styles.inner}>{children}</View>
-                <View style={styles.vents}>
+                <View style={[styles.vents, compactBottom && styles.compactVents]}>
                     {Array.from({ length: 8 }, (_, index) => <View key={index} style={styles.vent} />)}
                     <View style={styles.powerLight} />
                 </View>
@@ -63,6 +64,9 @@ const styles = StyleSheet.create({
         borderRightColor: '#080c09',
         borderBottomColor: '#030504',
         overflow: 'hidden',
+    },
+    compactPanelBottom: {
+        paddingBottom: 21,
     },
     highlight: {
         position: 'absolute',
@@ -107,6 +111,9 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 5,
+    },
+    compactVents: {
+        bottom: 5,
     },
     vent: {
         width: 5,

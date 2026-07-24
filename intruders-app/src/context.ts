@@ -7,5 +7,5 @@ export const AppContext = createContext({
     clearPlayerName: () => {},
 });
 
-export const HOST = 'http://intru-manual-1158751084.us-east-2.elb.amazonaws.com';
+export const HOST = 'https://intruders.click';
 export const SERVER_URL = 'https://pfi1of1wg6.execute-api.us-east-2.amazonaws.com';
