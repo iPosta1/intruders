@@ -21,7 +21,7 @@ export const MissionsCabin = ({ gameState, embedded = false, sectionHeight }: {
                         (gameState.missions[missionIndex]?.status === MISSION_STATUS.MISSION_FAILED ? colors.red : '#fff');
                     const isEnabled = gameState.missions[missionIndex]?.status === MISSION_STATUS.MISSION_FAILED ||
                         gameState.missions[missionIndex]?.status === MISSION_STATUS.MISSION_SUCCEED || missionIndex === gameState.mission
-                    return (<View style={styles.indicatorItem}>
+                    return (<View style={styles.indicatorItem} key={missionIndex}>
                         <GameButton size={20} color={buttonColor} round indicator isEnabled={isEnabled} />
                     </View>)
                 })}
@@ -29,6 +29,7 @@ export const MissionsCabin = ({ gameState, embedded = false, sectionHeight }: {
             <ComputerScreen embedded={embedded} width="100%" height={112} marginTop={7} maxWidth={520}>
                 <View style={styles.missionsList}>
                     {Array.from({ length: 5 }, (val, index) => index + 1).map(missionIndex => (<MissionItem
+                        key={missionIndex}
                         missionNumber={missionIndex}
                         status={gameState.missions[missionIndex]?.status}
                         playersOnTheMission={gameState.missions[missionIndex]?.playersOnMission}
@@ -43,7 +44,7 @@ export const MissionsCabin = ({ gameState, embedded = false, sectionHeight }: {
                 >
                     REJECTION TRACK
                 </Text>
-                {Array.from({ length: 5 }, (val, index) => index + 1).map(rejectionIndex => (<View style={styles.rejectionItem}>
+                {Array.from({ length: 5 }, (val, index) => index + 1).map(rejectionIndex => (<View style={styles.rejectionItem} key={rejectionIndex}>
                     <GameButton size={20} color={!!gameState.rejections[rejectionIndex]?.mission ? '#bc1e13' : '#fff'} round indicator
                         isEnabled={!!gameState.rejections[rejectionIndex]?.mission} />
                 </View>))}
@@ -85,15 +86,15 @@ const styles = StyleSheet.create({
     rejectionsLable: {
         fontFamily: 'title',
         fontSize: 19,
-        color: colors.phosphorBright,
+        color: '#aeb6aa',
         letterSpacing: 0.8,
         marginRight: 8,
         justifyContent: 'center',
         alignItems: 'center',
         alignContent: 'center',
-        textShadowColor: 'rgba(124,255,155,0.75)',
-        textShadowRadius: 6,
-        textShadowOffset: { width: 0, height: 0 },
+        textShadowColor: 'rgba(0,0,0,0.82)',
+        textShadowRadius: 1,
+        textShadowOffset: { width: 1, height: 1 },
     },
     compactRejectionsLabel: {
         fontSize: 14,

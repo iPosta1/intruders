@@ -29,6 +29,7 @@ export const ButtonsCabin = ({ gameState, setShowRoles, mutateGame, showRoles, e
     const [actionLoading, setActionLoading] = useState(false);
     const [actionSubmitted, setActionSubmitted] = useState(false);
     useEffect(() => setActionSubmitted(false), [gameState.mission]);
+    useEffect(() => () => setShowRoles(false), [setShowRoles]);
     const canAct = gameState.playerAction === GAME_STATUS.ACT_MISSON && !actionSubmitted;
     const canSendForApproval = gameState.leader === gameState.playerIndex && gameState.playerAction === GAME_STATUS.SELECT_PLAYERS_ON_MISSION &&
         gameState.missions[gameState.mission].preSelectedPlayers.length === missionSpec.players;
@@ -62,7 +63,8 @@ export const ButtonsCabin = ({ gameState, setShowRoles, mutateGame, showRoles, e
             <GameButton labelBottom="Settings" round size={buttonSize} color={'#fff'}
                 isEnabled onPress={() => navigation.navigate('SettingsScreen')} />
             <GameButton labelBottom="Show your role" size={buttonSize} color={showRoles ? 'orange' : colors.pureWhite} isEnabled
-                onPress={() => setShowRoles(!showRoles)}/>
+                onPressIn={() => setShowRoles(true)}
+                onPressOut={() => setShowRoles(false)}/>
             {canVote && <GameButtonGroup>
                 <GameButton labelBottom="Approve" size={buttonSize} color={colors.greenDigital} isEnabled={canVote} onPress={() => onVote(VOTE.APPROVE)} />
                 <GameButton labelBottom="Reject" size={buttonSize} color={colors.red} isEnabled={canVote} onPress={() => onVote(VOTE.REJECT)} />
