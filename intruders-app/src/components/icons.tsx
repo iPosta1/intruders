@@ -12,9 +12,13 @@ export const blurIcon = require('../../assets/blur.png');
 export const crownIcon = require('../../assets/crown.png')
 export const pencilIcon = require('../../assets/edit.png');
 
-export const UnknownSpaceman = () => <Image source={playerUnknownIcon} resizeMode="contain" style={styles.playerIconStyle} />;
-export const SpySpaceman = () => <Image source={playerSpyIcon} resizeMode="contain" style={styles.playerIconStyle} />;
-export const ResistenceSpaceman = () => <Image source={playerHumanIcon} resizeMode="contain" style={styles.playerIconStyle} />;
+const playerIconStyle = (size: number) => ({ width: size, height: size });
+export const UnknownSpaceman = ({ size = 42 }: { size?: number }) =>
+    <Image source={playerUnknownIcon} resizeMode="contain" style={playerIconStyle(size)} />;
+export const SpySpaceman = ({ size = 42 }: { size?: number }) =>
+    <Image source={playerSpyIcon} resizeMode="contain" style={playerIconStyle(size)} />;
+export const ResistenceSpaceman = ({ size = 42 }: { size?: number }) =>
+    <Image source={playerHumanIcon} resizeMode="contain" style={playerIconStyle(size)} />;
 export const PlayerLeaderIcon = () =>
     (<Image source={starIcon} style={{ ...styles.absoluteIcon, right: 0, marginRight: 3, marginLeft: 0, left: undefined}}></Image>);
 export const PlayerSelectedIcon = () =>
@@ -32,8 +36,4 @@ const styles = StyleSheet.create({
         marginTop: 3,
         tintColor: colors.greenDigital,
     },
-    playerIconStyle: {
-        height: 42,
-        width: 42,
-    }
 });

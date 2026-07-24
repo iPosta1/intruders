@@ -15,17 +15,46 @@ export const PlayersCabin = ({ gameState, showRoles, mutateGame, embedded = fals
 }) => {
     const { width, height } = useWindowDimensions();
     const count = Object.keys(gameState.players).length;
-    const columns = width < 370 ? 2 : width < 600 ? 3 : 5;
-    const availableWidth = Math.min(width - 104, 470);
-    const itemWidth = Math.max(72, Math.floor(availableWidth / columns) - 6);
-    const panelHeight = Math.max(290, Math.min(330, height * 0.36));
+    // Account for the device shell, screen padding and per-item margins so
+    // the calculated column count is also the column count that renders.
+    const availableWidth = Math.max(240, Math.min(width - 96, 500));
     const embeddedHeight = sectionHeight || 250;
+    const gridHeightWithHeader = Math.max(80, embeddedHeight - 44);
+    const onePlayerPerRow =
+        gridHeightWithHeader >= count * 60 &&
+        embeddedHeight / availableWidth >= 1.05;
+    const oneRowItemWidth = availableWidth / Math.max(1, count);
+    const columns = onePlayerPerRow
+        ? 1
+        : oneRowItemWidth >= 78
+        ? count
+        : width < 370 ? 2 : width < 600 ? 3 : Math.min(5, count);
+    const rows = Math.ceil(count / columns);
+    const showStatusBar = gridHeightWithHeader >= rows * 48;
+    const gridHeight = Math.max(80, embeddedHeight - (showStatusBar ? 44 : 12));
+    const panelHeight = Math.max(290, Math.min(330, height * 0.36));
+    const cellWidth = availableWidth / columns;
+    const cellHeight = gridHeight / rows;
+    const itemWidth = onePlayerPerRow
+        ? Math.min(380, Math.floor(cellWidth) - 16)
+        : Math.max(64, Math.floor(cellWidth) - 10);
+    const itemHeight = Math.max(48, Math.min(onePlayerPerRow ? 140 : 112, Math.floor(cellHeight) - 6));
+    const iconSize = Math.max(
+        onePlayerPerRow ? 30 : 26,
+        Math.min(onePlayerPerRow ? 56 : 50, itemHeight - 28, itemWidth - 18),
+    );
+    const nameSize = Math.max(
+        onePlayerPerRow ? 12 : 11,
+        Math.min(onePlayerPerRow ? 20 : 17, Math.floor(Math.min(itemWidth / 5.6, itemHeight / 5))),
+    );
     return (<GradientPanel embedded={embedded} height={embedded ? embeddedHeight : panelHeight} marginTop={embedded ? 0 : 5} roundTop>
         <ComputerScreen embedded={embedded} width="100%" height={embedded ? embeddedHeight : panelHeight - 58} marginTop={embedded ? 0 : 8} maxWidth={520}>
-            <View style={styles.statusBar}>
-                <Text numberOfLines={1} style={[styles.statusText, styles.leaderText]}>{`LEADER  ${gameState.players[gameState.leader].name}`}</Text>
-                <Text numberOfLines={1} style={styles.statusText}>{`MISSION  ${gameState.mission}`}</Text>
-            </View>
+            {showStatusBar && (
+                <View style={styles.statusBar}>
+                    <Text numberOfLines={1} style={[styles.statusText, styles.leaderText]}>{`LEADER  ${gameState.players[gameState.leader].name}`}</Text>
+                    <Text numberOfLines={1} style={styles.statusText}>{`MISSION  ${gameState.mission}`}</Text>
+                </View>
+            )}
             <View style={styles.playerIconsContainer}>
                 {Object.keys(gameState.players).map(playerIndex => {
                     return (<PlayerItem
@@ -36,6 +65,10 @@ export const PlayersCabin = ({ gameState, showRoles, mutateGame, embedded = fals
                         showRoles={showRoles}
                         mutateGame={mutateGame}
                         itemWidth={itemWidth}
+                        itemHeight={itemHeight}
+                        iconSize={iconSize}
+                        nameSize={nameSize}
+                        horizontal={onePlayerPerRow}
                     />);
                 })}
             </View>

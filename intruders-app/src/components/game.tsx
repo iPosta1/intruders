@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { ScrollView, StyleSheet, useWindowDimensions, View } from "react-native";
 import { KeyedMutator } from "swr";
-import { GameStateResponse } from "../types/gameServerTypes";
+import { GameStateResponse, GAME_STATUS } from "../types/gameServerTypes";
 import { colors } from "../utils/constants";
+import { getMissionSpecification } from "../utils/game";
 import { Background } from "./background";
 import { ButtonsCabin } from "./game/buttonsCabin";
 import { InfoCabin } from "./game/infoCabin";
@@ -12,15 +13,26 @@ import { GradientPanel } from "./shared/gradientPanel";
 
 export const Game = ({ gameState, mutate }: { gameState: GameStateResponse, mutate: KeyedMutator<GameStateResponse> }) => {
     const [showRoles, setShowRoles] = useState(false);
-    const { width } = useWindowDimensions();
+    const { height } = useWindowDimensions();
     const playerCount = Object.keys(gameState.players).length;
-    const columns = width < 370 ? 2 : width < 600 ? 3 : 5;
-    const playerRows = Math.ceil(playerCount / columns);
-    const playersHeight = 58 + playerRows * 70;
-    const controlsHeight = width < 370 ? 220 : 178;
-    // Panel chrome, section gaps and two-line control labels need their own
-    // space. Without this allowance the panel's overflow clips the labels.
-    const deviceHeight = playersHeight + 166 + 116 + controlsHeight + 132;
+    const missionsHeight = 174;
+    const infoHeight = 116;
+    const missionSpec = getMissionSpecification(gameState);
+    const canSendTeam =
+        gameState.leader === gameState.playerIndex &&
+        gameState.playerAction === GAME_STATUS.SELECT_PLAYERS_ON_MISSION &&
+        gameState.missions[gameState.mission].preSelectedPlayers.length === missionSpec.players;
+    const hasContextualControls =
+        gameState.playerAction === GAME_STATUS.APPROVE_OR_REJECT_PLAYERS ||
+        gameState.playerAction === GAME_STATUS.ACT_MISSON ||
+        canSendTeam;
+    const controlsHeight = hasContextualControls ? 104 : 84;
+    const bottomSectionsHeight = missionsHeight + infoHeight + controlsHeight;
+    const panelChromeAndGaps = 94;
+    const minimumPlayersHeight = playerCount > 6 ? 250 : 210;
+    // Include the ScrollView padding and panel margins in the viewport budget.
+    const deviceHeight = Math.max(height - 20, bottomSectionsHeight + panelChromeAndGaps + minimumPlayersHeight);
+    const playersHeight = deviceHeight - bottomSectionsHeight - panelChromeAndGaps;
 
     return (<Background>
         <ScrollView contentContainerStyle={styles.container}>
@@ -28,9 +40,9 @@ export const Game = ({ gameState, mutate }: { gameState: GameStateResponse, muta
                 <View style={styles.deviceContent}>
                     <PlayersCabin embedded sectionHeight={playersHeight} gameState={gameState} showRoles={showRoles} mutateGame={mutate} />
                     <View style={styles.separator} />
-                    <MissionsCabin embedded gameState={gameState} />
+                    <MissionsCabin embedded sectionHeight={missionsHeight} gameState={gameState} />
                     <View style={styles.separator} />
-                    <InfoCabin embedded gameState={gameState} showRoles={showRoles} />
+                    <InfoCabin embedded sectionHeight={infoHeight} gameState={gameState} showRoles={showRoles} />
                     <View style={styles.separator} />
                     <ButtonsCabin embedded sectionHeight={controlsHeight} gameState={gameState} setShowRoles={setShowRoles} showRoles={showRoles} mutateGame={mutate} />
                 </View>
@@ -48,12 +60,13 @@ const styles = StyleSheet.create({
         width: '100%',
         paddingHorizontal: 9,
         paddingTop: 5,
-        paddingBottom: 20,
+        paddingBottom: 5,
     },
     deviceContent: {
+        flex: 1,
         width: "100%",
         alignItems: "center",
-        gap: 8,
+        gap: 6,
     },
     separator: {
         width: "92%",

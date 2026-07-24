@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { GameStateResponse, MISSION_STATUS } from "../../types/gameServerTypes";
 import React from "react";
 import { MissionItem } from "./missionItem";
@@ -7,9 +7,14 @@ import { GradientPanel } from "../shared/gradientPanel";
 import { ComputerScreen } from "../shared/computerScreen";
 import { colors } from "../../utils/constants";
 
-export const MissionsCabin = ({ gameState, embedded = false }: { gameState?: GameStateResponse, embedded?: boolean }) => {
+export const MissionsCabin = ({ gameState, embedded = false, sectionHeight }: {
+    gameState?: GameStateResponse,
+    embedded?: boolean,
+    sectionHeight?: number,
+}) => {
+    const { width } = useWindowDimensions();
     return (
-        <GradientPanel embedded={embedded} height={embedded ? 166 : 210} reverse>
+        <GradientPanel embedded={embedded} height={embedded ? sectionHeight || 174 : 210} reverse>
             <View style={styles.missionsIndicatorContainer}>
                 {Array.from({ length: 5 }, (val, index) => index + 1).map(missionIndex => {
                     const buttonColor = gameState.missions[missionIndex]?.status === MISSION_STATUS.MISSION_SUCCEED ? colors.green :
@@ -32,7 +37,12 @@ export const MissionsCabin = ({ gameState, embedded = false }: { gameState?: Gam
                 </View>
             </ComputerScreen>
             <View style={styles.rejectionsContainer}>
-                <Text style={styles.rejectionsLable}>REJECTION TRACK</Text>
+                <Text
+                    numberOfLines={1}
+                    style={[styles.rejectionsLable, width < 430 && styles.compactRejectionsLabel]}
+                >
+                    REJECTION TRACK
+                </Text>
                 {Array.from({ length: 5 }, (val, index) => index + 1).map(rejectionIndex => (<View style={styles.rejectionItem}>
                     <GameButton size={20} color={!!gameState.rejections[rejectionIndex]?.mission ? '#bc1e13' : '#fff'} round indicator
                         isEnabled={!!gameState.rejections[rejectionIndex]?.mission} />
@@ -81,6 +91,11 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         alignContent: 'center',
+    },
+    compactRejectionsLabel: {
+        fontSize: 14,
+        letterSpacing: 0.2,
+        marginRight: 3,
     },
     rejectionItem: {
         width: 20,

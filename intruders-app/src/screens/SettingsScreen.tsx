@@ -1,7 +1,7 @@
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import React, { useState } from "react";
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import { ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
 import { RootStackParamList } from "../../App";
 import { Background } from "../components/background";
 import { GameButton } from "../components/shared/gameButton";
@@ -16,6 +16,7 @@ import { LoadingScreen } from "./LoadingScreen";
 export const SettingsScreen = () => {
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
     const { player, setPlayerName } = React.useContext(AppContext);
+    const { height } = useWindowDimensions();
     const { data: status, mutate, isLoading: userGameIsLoading } = useUserGameId(player?.id);
     const [isLoading, setIsLoading] = useState(false);
     const [name, setName] = useState(player?.name || '');
@@ -46,162 +47,227 @@ export const SettingsScreen = () => {
     };
 
     const leaveTheGame = async () => {
+        if (!status?.gameId || isLoading) return;
         setIsLoading(true);
-        const resp = await DELETE(`/leave-game/${status.gameId}`);
-        if (resp.ok) {
-            mutate(null);
+        try {
+            const resp = await DELETE(`/leave-game/${status.gameId}`);
+            if (resp.ok) {
+                await mutate(null);
+                navigation.reset({ index: 0, routes: [{ name: 'MainScreen' }] });
+            }
+        } finally {
             setIsLoading(false);
-            navigation.reset({ index: 0, routes: [{ name: 'MainScreen' }] });
         }
-    }
+    };
 
-    const navigateToDefault = async () => {
+    const navigateToDefault = () => {
         if (status?.gameId) {
             navigation.replace('GameScreen', { gameId: status.gameId });
         } else {
             navigation.navigate('MainScreen');
         }
-    }
+    };
 
-    return (<Background>
-        {userGameIsLoading ? <LoadingScreen /> :
-            <View style={styles.outside}>
-                <GradientPanel roundBottom roundTop marginTop={10} marginBottom={10}>
-                    <LogoScreen text="Settings" />
-                    <View style={styles.menu}>
-                        <View style={styles.optionsGroup}>
-                            <View style={styles.nameBlock}>
-                                <Text style={styles.menuItemText}>PLAYER IDENTITY</Text>
-                                <TextInput
-                                    value={name}
-                                    onChangeText={setName}
-                                    maxLength={16}
-                                    onSubmitEditing={saveName}
-                                    style={styles.nameInput}
-                                    placeholder="ENTER NAME"
-                                    placeholderTextColor={colors.lightGray2}
+    const canEditName = !status?.gameId || status.status === 'WAITING_PLAYERS_TO_JOIN';
+    const canSave = canEditName && !isLoading && !!name.trim() && name.trim() !== player?.name;
+    const panelHeight = Math.max(650, height - 20);
+    const logoHeight = canEditName
+        ? Math.max(270, Math.min(330, height * 0.4))
+        : Math.max(190, Math.min(240, height * 0.29));
+    const identityEditor = canEditName ? (
+        <View style={styles.identityScreen}>
+            <Text style={styles.screenEyebrow}>PLAYER IDENTITY</Text>
+            <TextInput
+                value={name}
+                onChangeText={setName}
+                maxLength={16}
+                onSubmitEditing={saveName}
+                style={styles.nameInput}
+                placeholder="ENTER NAME"
+                placeholderTextColor={colors.lightGray2}
+            />
+            <Text
+                accessibilityRole="alert"
+                style={[
+                    styles.saveMessage,
+                    saveMessage && saveMessage !== 'IDENTITY SAVED' ? styles.saveError : styles.saveSuccess,
+                ]}
+            >
+                {saveMessage || (canSave ? 'NAME MODIFIED — PRESS SAVE' : 'IDENTITY READY')}
+            </Text>
+        </View>
+    ) : undefined;
+
+    return (
+        <Background>
+            {userGameIsLoading ? <LoadingScreen /> :
+                <ScrollView contentContainerStyle={styles.outside}>
+                    <GradientPanel height={panelHeight} roundBottom roundTop marginTop={5} marginBottom={5}>
+                        <View style={styles.deviceContent}>
+                            <View style={[styles.logoSlot, { height: logoHeight }]}>
+                                <LogoScreen text="Settings" footer={identityEditor} />
+                            </View>
+
+                            {!!status?.gameId && (
+                                <View style={styles.gameStatus}>
+                                    <Text style={styles.gameStatusLabel}>CURRENT GAME</Text>
+                                    <Text style={styles.gameCode}>{status.gameId.toUpperCase()}</Text>
+                                    <Text style={styles.gameStatusHint}>LEAVE RETURNS YOU TO THE TITLE SCREEN</Text>
+                                </View>
+                            )}
+
+                            <View style={styles.flexSpacer} />
+                            <View style={styles.separator} />
+                            <View style={styles.controls}>
+                                {canEditName && (
+                                    <GameButton
+                                        size={48}
+                                        color={colors.greenDigital}
+                                        isEnabled={canSave}
+                                        labelBottom={isLoading ? "Saving…" : "Save name"}
+                                        labelSize={12}
+                                        onPress={saveName}
+                                    />
+                                )}
+                                {!!status?.gameId && (
+                                    <GameButton
+                                        size={48}
+                                        color={colors.red}
+                                        isEnabled={!isLoading}
+                                        labelBottom="Leave game"
+                                        labelSize={12}
+                                        onPress={leaveTheGame}
+                                    />
+                                )}
+                                <GameButton
+                                    size={48}
+                                    color={colors.pureWhite}
+                                    isEnabled={!isLoading}
+                                    labelBottom="Back"
+                                    labelSize={12}
+                                    onPress={() => navigation.canGoBack() ? navigation.goBack() : navigateToDefault()}
                                 />
-                                {!!saveMessage && <Text
-                                    accessibilityRole="alert"
-                                    style={[styles.saveMessage, saveMessage === 'IDENTITY SAVED' ? styles.saveSuccess : styles.saveError]}
-                                >{saveMessage}</Text>}
-                                <GameButton size={46} color={colors.greenDigital} isEnabled={!isLoading && !!name.trim() && name.trim() !== player?.name}
-                                    labelBottom={isLoading ? "Saving…" : "Save name"} labelSize={11} onPress={saveName} />
-                            </View>
-                            {!!status?.gameId &&
-                                <View style={styles.optionItemRow}>
-                                    <View style={styles.optionItem}><Text style={styles.menuItemText}>Leave current game</Text>
-                                        <Text style={styles.menuItemTextSmall}>{` (${status?.gameId})`}</Text>
-                                    </View>
-
-                                    <View style={styles.optionItemButton}>
-                                        <GameButton size={50} color={colors.red} isEnabled onPress={() => leaveTheGame()} />
-                                    </View>
-                                </View>
-                            }
-                        </View>
-                        <View style={styles.optionsGroup}>
-                            <View style={styles.optionItemRow}>
-                                <View style={styles.optionItemButton}>
-                                    <GameButton size={50} color={colors.pureWhite} isEnabled labelBottom="Back" labelSize={14}
-                                        onPress={() => navigation.canGoBack() ? navigation.goBack() : navigateToDefault()} />
-                                </View>
                             </View>
                         </View>
-                    </View>
-                </GradientPanel>
-            </View>
-        }
-    </Background>);
-}
+                    </GradientPanel>
+                </ScrollView>
+            }
+        </Background>
+    );
+};
 
 const styles = StyleSheet.create({
     outside: {
-        alignContent: "center",
-        justifyContent: 'center',
         alignItems: 'center',
-        flex: 1,
+        justifyContent: 'flex-start',
+        flexGrow: 1,
+        width: '100%',
+        paddingHorizontal: 9,
+        paddingVertical: 5,
     },
-    optionsGroup: {
-        alignContent: "center",
-        justifyContent: "center",
-        alignItems: "center",
+    deviceContent: {
         flex: 1,
         width: '100%',
-    },
-    optionItemRow: {
-        alignContent: "center",
-        justifyContent: 'space-around',
         alignItems: 'center',
-        flexDirection: 'row',
+        gap: 12,
+    },
+    logoSlot: {
         width: '100%',
-        height: 50,
-        marginBottom: 10,
     },
-    optionItem: {
-        alignContent: "center",
-        justifyContent: 'center',
-        alignItems: 'center',
+    identityScreen: {
         flex: 1,
-        width: '100%'
-    },
-    optionItemButton: {
-        alignContent: "center",
+        width: '100%',
         justifyContent: 'center',
         alignItems: 'center',
-        width: 60,
+        gap: 5,
     },
-    menuItemText: {
-        fontSize: 16,
-        color: colors.lightGray1
-    },
-    menuItemTextSmall: {
-        fontSize: 12,
-        color: colors.lightGray1
-    },
-    menu: {
-        alignContent: "center",
-        justifyContent: 'center',
-        alignItems: 'center',
-        flex: 1,
-    },
-    nameBlock: {
-        width: '90%',
-        alignItems: 'center',
-        gap: 10,
-        paddingVertical: 16,
+    screenEyebrow: {
+        color: colors.phosphorBright,
+        fontFamily: 'title',
+        fontSize: 13,
+        letterSpacing: 1.2,
+        textAlign: 'center',
     },
     nameInput: {
         width: '100%',
-        maxWidth: 300,
+        maxWidth: 340,
         borderWidth: 1,
-        borderColor: colors.greenDigital,
-        backgroundColor: colors.screenColor,
-        color: colors.greenDigital,
+        borderColor: colors.phosphor,
+        backgroundColor: colors.screenDeep,
+        color: colors.phosphorBright,
         fontFamily: 'title',
         fontSize: 18,
-        letterSpacing: 1,
+        letterSpacing: 1.2,
         textAlign: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 14,
+        paddingVertical: 7,
+        paddingHorizontal: 12,
     },
     saveMessage: {
         minHeight: 18,
         fontFamily: 'basic',
-        fontSize: 13,
-        letterSpacing: 0.6,
+        fontSize: 12,
+        letterSpacing: 0.5,
         textAlign: 'center',
     },
     saveSuccess: {
-        color: colors.greenDigital,
+        color: colors.phosphor,
     },
     saveError: {
         color: colors.red,
     },
-    modalStyle: {
-        width: '80%',
-        backgroundColor: colors.gray1,
-        position: 'absolute',
-        height: 200,
-    }
+    gameStatus: {
+        width: '92%',
+        minHeight: 70,
+        maxWidth: 460,
+        borderTopWidth: 1,
+        borderBottomWidth: 1,
+        borderColor: colors.casingLight,
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingVertical: 8,
+        paddingHorizontal: 8,
+        columnGap: 10,
+    },
+    gameStatusLabel: {
+        color: colors.phosphor,
+        fontFamily: 'title',
+        fontSize: 14,
+        letterSpacing: 0.8,
+    },
+    gameCode: {
+        color: colors.phosphorBright,
+        fontFamily: 'title',
+        fontSize: 18,
+        letterSpacing: 2,
+    },
+    gameStatusHint: {
+        width: '100%',
+        color: colors.lightGray2,
+        fontFamily: 'basic',
+        fontSize: 11,
+        letterSpacing: 0.4,
+        textAlign: 'center',
+    },
+    flexSpacer: {
+        flex: 1,
+        minHeight: 4,
+    },
+    separator: {
+        width: '92%',
+        height: 1,
+        backgroundColor: colors.casingLight,
+        opacity: 0.55,
+    },
+    controls: {
+        minHeight: 92,
+        width: '100%',
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        alignItems: 'flex-start',
+        gap: 8,
+        paddingTop: 4,
+    },
 });

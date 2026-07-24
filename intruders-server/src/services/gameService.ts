@@ -125,6 +125,9 @@ export class GameService {
         if (!game) {
             throw new Error('The game does not exist');
         }
+        if (game.status !== GAME_STATUS.WAITING_PLAYERS_TO_JOIN) {
+            throw new Error('Names can only be changed before the game starts');
+        }
         await this.gameDao.changeName(params.gameId, this.userId, newName);
     }
 

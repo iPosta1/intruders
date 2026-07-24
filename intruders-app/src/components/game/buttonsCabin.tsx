@@ -58,7 +58,7 @@ export const ButtonsCabin = ({ gameState, setShowRoles, mutateGame, showRoles, e
     }
 
     return (<GradientPanel embedded={embedded} height={embedded ? sectionHeight || 178 : 178} reverse roundBottom>
-        <View style={styles.buttonContainer}>
+        <View style={[styles.buttonContainer, sectionHeight && sectionHeight < 100 && styles.compactButtonContainer]}>
             <GameButton labelBottom="Settings" round size={buttonSize} color={'#fff'}
                 isEnabled onPress={() => navigation.navigate('SettingsScreen')} />
             <GameButton labelBottom="Show your role" size={buttonSize} color={showRoles ? 'orange' : colors.pureWhite} isEnabled
@@ -92,5 +92,8 @@ const styles = StyleSheet.create({
         width: "100%",
         flex: 1,
         gap: 4,
-    }
+    },
+    compactButtonContainer: {
+        paddingTop: 4,
+    },
 });

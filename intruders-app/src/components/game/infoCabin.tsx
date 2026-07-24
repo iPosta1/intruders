@@ -10,10 +10,15 @@ import { ComputerScreen } from "../shared/computerScreen";
 import { AnimatedCursor } from "../shared/animatedCursor";
 import { colors } from "../../utils/constants";
 
-export const InfoCabin = ({ gameState, showRoles, embedded = false }: { gameState?: GameStateResponse, showRoles: boolean, embedded?: boolean }) => {
+export const InfoCabin = ({ gameState, showRoles, embedded = false, sectionHeight }: {
+    gameState?: GameStateResponse,
+    showRoles: boolean,
+    embedded?: boolean,
+    sectionHeight?: number,
+}) => {
     return (
-        <GradientPanel embedded={embedded} height={embedded ? 116 : 160}>
-            <ComputerScreen embedded={embedded} width="100%" height={104} maxWidth={520}>
+        <GradientPanel embedded={embedded} height={embedded ? sectionHeight || 116 : 160}>
+            <ComputerScreen embedded={embedded} width="100%" height={embedded ? (sectionHeight || 116) - 12 : 104} maxWidth={520}>
                 <View style={styles.softwareContainer}>
                     {!showRoles ?
                         <View style={styles.gameStatusContainer}>

@@ -15,6 +15,10 @@ export type PlayerItemProps = {
     gameState: GameStateResponse,
     mutateGame: KeyedMutator<GameStateResponse>,
     itemWidth?: number,
+    itemHeight?: number,
+    iconSize?: number,
+    nameSize?: number,
+    horizontal?: boolean,
 };
 
 export const PlayerItem = ({
@@ -25,6 +29,10 @@ export const PlayerItem = ({
     gameState,
     mutateGame,
     itemWidth = 88,
+    itemHeight = 64,
+    iconSize = 42,
+    nameSize = 16,
+    horizontal = false,
 }: PlayerItemProps) => {
     const playerNumber = Number(playerIndex);
     const playerIsSelected = gameState.missions[gameState.mission]?.preSelectedPlayers.includes(playerNumber);
@@ -53,14 +61,19 @@ export const PlayerItem = ({
     return (<TouchableOpacity
         accessibilityRole="button"
         accessibilityLabel={`Player ${name}${gameState.leader === playerNumber ? ', leader' : ''}${playerIsSelected ? ', selected' : ''}`}
-        style={[styles.playerItem, { width: itemWidth }, gameState.playerIndex === playerNumber && styles.currentPlayer]}
+        style={[
+            styles.playerItem,
+            horizontal && styles.horizontalPlayerItem,
+            { width: itemWidth, height: itemHeight },
+            gameState.playerIndex === playerNumber && styles.currentPlayer,
+        ]}
         onPress={playerIsSelected ? () => onRemovePlayer(playerNumber) : () => onSelectPlayer(playerNumber)}
         key={playerNumber}>
         {!showRoles &&
-            <UnknownSpaceman />
+            <UnknownSpaceman size={iconSize} />
         }
         {!!showRoles &&
-            (playerRole ? (playerRole === 'spy' ? <SpySpaceman /> : <ResistenceSpaceman />) : <UnknownSpaceman />)
+            (playerRole ? (playerRole === 'spy' ? <SpySpaceman size={iconSize} /> : <ResistenceSpaceman size={iconSize} />) : <UnknownSpaceman size={iconSize} />)
         }
         {gameState.leader === playerNumber &&
             <PlayerLeaderIcon />
@@ -69,7 +82,16 @@ export const PlayerItem = ({
             <PlayerSelectedIcon />
         }
         {isLoading && <PlayerLoadingIndicator />}
-        <Text style={styles.playerItemName} numberOfLines={1}>{name}</Text>
+        <Text
+            style={[
+                styles.playerItemName,
+                horizontal && styles.horizontalPlayerName,
+                { fontSize: nameSize, lineHeight: nameSize + 2 },
+            ]}
+            numberOfLines={1}
+        >
+            {name}
+        </Text>
     </TouchableOpacity>);
 };
 
@@ -80,7 +102,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         margin: 2,
         minWidth: 0,
-        height: 64,
         borderColor: colors.greenDigital,
         shadowColor: colors.greenDigital,
         shadowOffset: { width: 1, height: 1 },
@@ -91,15 +112,23 @@ const styles = StyleSheet.create({
         borderColor: colors.phosphorBright,
         backgroundColor: 'rgba(87, 255, 132, 0.08)',
     },
+    horizontalPlayerItem: {
+        flexDirection: 'row',
+        justifyContent: 'flex-start',
+        paddingHorizontal: 22,
+    },
     playerItemName: {
         color: colors.phosphorBright,
         fontFamily: 'title',
-        fontSize: 16,
-        lineHeight: 18,
         letterSpacing: 0.3,
         textAlign: 'center',
         flexWrap: 'nowrap',
         textShadowColor: colors.phosphor,
         textShadowRadius: 2,
+    },
+    horizontalPlayerName: {
+        flexShrink: 1,
+        marginLeft: 18,
+        textAlign: 'left',
     },
 });

@@ -319,17 +319,17 @@ describe('Game service tests', () => {
         expect(gameDAO.changeName).not.toHaveBeenCalled();
     });
 
-    it('Should change name when the game is already started', async () => {
+    it('Should reject name changes when the game is already started', async () => {
         gameDAO.getGame.mockResolvedValue(Promise.resolve({
             gameId: 'idqz',
             status: GAME_STATUS.WAITING_LEADER_TO_SELECT_PLAYERS,
         } as any));
         gameDAO.changeName.mockResolvedValue(Promise.resolve());
-        await new GameService(userId, defaultUserName, gameDAO).processRequest(
+        await expect(new GameService(userId, defaultUserName, gameDAO).processRequest(
             GAME_ACTIONS.CHANGE_NAME,
             {gameId: 'idqz', newName: 'loh'},
-        );
-        expect(gameDAO.changeName).toHaveBeenCalledWith('idqz', userId, 'loh');
+        )).rejects.toThrow('Names can only be changed before the game starts');
+        expect(gameDAO.changeName).not.toHaveBeenCalled();
     });
 
     //CHANGE_NAME tests

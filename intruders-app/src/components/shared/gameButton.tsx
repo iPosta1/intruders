@@ -20,13 +20,17 @@ export const GameButtonGroup = ({ children }: { children: ReactNode }) => (
     <View style={styles.group}>{children}</View>
 );
 
-export const GameButton = ({ size, color, isEnabled = false, onPress, onPressIn, onPressOut, round, labelBottom, labelSize }: Props) => {
+export const GameButton = ({ size, color, isEnabled = false, onPress, onPressIn, onPressOut, round, labelBottom, labelSize, indicator = false }: Props) => {
     const { width } = useWindowDimensions();
     const responsiveLabel = labelSize || Math.max(11, Math.min(13, width / 32));
     const interactive = isEnabled && !!(onPress || onPressIn || onPressOut);
 
     return (
-        <View style={[styles.wrapper, { width: Math.max(size, 58) }]}>
+        <View style={[
+            styles.wrapper,
+            indicator && styles.indicatorWrapper,
+            { width: indicator ? size : Math.max(size, 58) },
+        ]}>
             <LinearGradient colors={['#495149', '#101410', '#030403']} style={[styles.socket, { width: size, height: size, borderRadius: round ? size : 9 }]}>
                 <Pressable
                     accessibilityRole={interactive ? 'button' : undefined}
@@ -59,6 +63,10 @@ export const GameButton = ({ size, color, isEnabled = false, onPress, onPressIn,
 
 const styles = StyleSheet.create({
     wrapper: { alignItems: 'center', marginHorizontal: 4, marginBottom: 7 },
+    indicatorWrapper: {
+        marginHorizontal: 0,
+        marginBottom: 0,
+    },
     group: {
         flexDirection: 'row',
         padding: 5,

@@ -15,13 +15,9 @@ export const MissionItem = ({ missionNumber, gameState }: {
     return (
         <View style={styles.missionItem}>
             <Text style={styles.missionNameText}>{`M${missionNumber}`}</Text>
-            <View style={[styles.missionItemCircle, needsTwoFails && styles.twoFailMission]}>
+            <View style={styles.missionItemCircle}>
                 <Text style={styles.playerCount}>{missionSpec?.players}</Text>
-                {needsTwoFails && (
-                    <View style={styles.failureBadge}>
-                        <Text style={styles.failureBadgeText}>{`${missionSpec.fails}× FAIL`}</Text>
-                    </View>
-                )}
+                {needsTwoFails && <Text style={styles.failRequirement}>/{missionSpec.fails}</Text>}
             </View>
             <View style={styles.missionActionsContainer}>
                 {gameState.missions[missionNumber]?.missionActions?.map((action, index) => {
@@ -72,33 +68,20 @@ const styles = StyleSheet.create({
         marginBottom: 3,
         textAlign: "center",
     },
-    twoFailMission: {
-        borderColor: colors.amber,
-    },
     playerCount: {
         color: colors.greenDigital,
         fontSize: 19,
         fontFamily: "title",
         textAlign: "center",
     },
-    failureBadge: {
-        position: "absolute",
-        left: 2,
-        right: 2,
+    failRequirement: {
+        position: 'absolute',
+        right: 3,
         bottom: 2,
-        height: 12,
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: colors.screenDeep,
-        borderTopWidth: 1,
-        borderTopColor: colors.amber,
-    },
-    failureBadgeText: {
-        color: colors.amber,
-        fontFamily: "basic",
-        fontSize: 8,
-        lineHeight: 10,
-        letterSpacing: 0.3,
+        color: colors.greenDigital,
+        fontSize: 10,
+        lineHeight: 11,
+        fontFamily: "title",
     },
     missionActionsContainer: {
         flexDirection: "row",
