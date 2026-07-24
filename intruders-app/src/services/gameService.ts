@@ -25,7 +25,12 @@ export function useUserGameId(playerId: string) {
     const { data, isLoading, mutate } = useSWR(
         playerId ? ['/find-game', playerId] : null,
         ([path]) => extractBody(GET(path, { silent: true })),
-        { refreshInterval: 0, dedupingInterval: 5000 },
+        {
+            refreshInterval: 0,
+            dedupingInterval: 1000,
+            revalidateOnFocus: true,
+            revalidateOnMount: true,
+        },
     );
     return { data, isLoading, mutate };
 }

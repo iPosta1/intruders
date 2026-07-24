@@ -64,9 +64,12 @@ const styles = StyleSheet.create({
         marginTop: 2,
     },
     missionNameText: {
-        color: colors.greenDigital,
-        fontSize: 13,
-        fontFamily: "basic",
+        color: colors.phosphorBright,
+        fontSize: 17,
+        lineHeight: 20,
+        fontFamily: "title",
+        letterSpacing: 0.4,
+        marginBottom: 3,
         textAlign: "center",
     },
     twoFailMission: {

@@ -11,11 +11,14 @@ import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../../App";
 import { DELETE } from "../utils/fetch";
-import { LoadingScreen } from "../screens/LoadingScreen";
+import { useSWRConfig } from "swr";
+import { AppContext } from "../context";
 
 export const GameResult = ({ gameState }: { gameState: GameStateResponse }) => {
 
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+    const { mutate } = useSWRConfig();
+    const { player } = React.useContext(AppContext);
     const { height } = useWindowDimensions();
     const [isLeaving, setIsLeaving] = useState(false);
     const winner = gameState.finished.winner === ROLE.SPY ? 'ALIEN SPIES' : 'HUMAN RESISTANCE';
@@ -23,15 +26,18 @@ export const GameResult = ({ gameState }: { gameState: GameStateResponse }) => {
     const exitResult = async () => {
         if (isLeaving) return;
         setIsLeaving(true);
-        const response = await DELETE(`/leave-game/${gameState.gameId}`);
-        if (response.ok) {
-            navigation.reset({ index: 0, routes: [{ name: 'MainScreen' }] });
-            return;
+        try {
+            const response = await DELETE(`/leave-game/${gameState.gameId}`);
+            if (response.ok) {
+                await mutate(['/find-game', player?.id], null, { revalidate: false });
+                await mutate([`/status/${gameState.gameId}`, player?.id], null, { revalidate: false });
+                navigation.reset({ index: 0, routes: [{ name: 'MainScreen' }] });
+                return;
+            }
+        } finally {
+            setIsLeaving(false);
         }
-        setIsLeaving(false);
     };
-
-    if (isLeaving) return <LoadingScreen />;
 
     return (
         <Background>
@@ -77,7 +83,14 @@ export const GameResult = ({ gameState }: { gameState: GameStateResponse }) => {
                         </View>
                     </ComputerScreen>
                     <View style={styles.button}>
-                        <GameButton labelBottom="Exit results" size={50} labelSize={13} color={colors.amber} isEnabled onPress={exitResult} />
+                        <GameButton
+                            labelBottom={isLeaving ? "Exiting…" : "Exit results"}
+                            size={50}
+                            labelSize={13}
+                            color={colors.amber}
+                            isEnabled={!isLeaving}
+                            onPress={exitResult}
+                        />
                     </View>
                 </GradientPanel>
             </ScrollView>

@@ -82,12 +82,12 @@ export const ButtonsCabin = ({ gameState, setShowRoles, mutateGame, showRoles, e
 
 const styles = StyleSheet.create({
     buttonContainer: {
-        alignContent: "center",
+        alignContent: "flex-start",
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         flexDirection: 'row',
         marginBottom: 5,
-        paddingTop: 5,
+        paddingTop: 10,
         flexWrap: 'wrap',
         width: "100%",
         flex: 1,

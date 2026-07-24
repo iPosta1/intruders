@@ -16,9 +16,11 @@ export const Game = ({ gameState, mutate }: { gameState: GameStateResponse, muta
     const playerCount = Object.keys(gameState.players).length;
     const columns = width < 370 ? 2 : width < 600 ? 3 : 5;
     const playerRows = Math.ceil(playerCount / columns);
-    const playersHeight = 58 + playerRows * 66;
+    const playersHeight = 58 + playerRows * 70;
     const controlsHeight = width < 370 ? 220 : 178;
-    const deviceHeight = playersHeight + 166 + 116 + controlsHeight + 100;
+    // Panel chrome, section gaps and two-line control labels need their own
+    // space. Without this allowance the panel's overflow clips the labels.
+    const deviceHeight = playersHeight + 166 + 116 + controlsHeight + 132;
 
     return (<Background>
         <ScrollView contentContainerStyle={styles.container}>
@@ -45,7 +47,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         width: '100%',
         paddingHorizontal: 9,
-        paddingVertical: 5,
+        paddingTop: 5,
+        paddingBottom: 20,
     },
     deviceContent: {
         width: "100%",

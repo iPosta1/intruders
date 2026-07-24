@@ -20,43 +20,59 @@ const makeRequest = async (path: string, type: string, body?: object, silent = f
         'X-Player-Name': encodeURIComponent(player.name),
     };
 
-    const fetchResponse = await fetch(`${SERVER_URL}${path}`, {
-        method: type,
-        headers,
-        body: body ? JSON.stringify(body) : undefined
-    });
-    if (fetchResponse.status === 200) {
-        const data = await fetchResponse.json();
+    let fetchResponse: Response;
+    try {
+        fetchResponse = await fetch(`${SERVER_URL}${path}`, {
+            method: type,
+            headers,
+            body: body ? JSON.stringify(body) : undefined
+        });
+    } catch {
+        if (!silent) showError('Connection failed. Please try again.');
+        return { ok: false };
+    }
+
+    const responseText = await fetchResponse.text();
+    if (fetchResponse.ok) {
+        let data: any = undefined;
+        if (responseText) {
+            try {
+                data = JSON.parse(responseText);
+            } catch {
+                data = responseText;
+            }
+        }
         return {
             ok: true,
-            data: data,
+            data,
         };
     } else {
-        const msg = await fetchResponse.text();
-        if (!silent) Toast.show(parseError(msg), {
-            duration: Toast.durations.LONG,
-            animation: true,
-            hideOnPress: true,
-            position: Toast.positions.TOP,
-            shadow: true,
-            textColor: colors.greenDigital,
-            opacity: 0.8,
-            textStyle: {
-                fontFamily: 'title',
-                fontWeight: 'bold',
-                fontSize: 14,
-                textAlign: 'left'
-            },
-            containerStyle: {
-                backgroundColor: colors.screenColor,
-                borderRadius: 0,
-                borderColor: colors.greenDigital,
-                borderWidth: 2,                
-            }
-        });
+        if (!silent) showError(parseError(responseText));
         return { ok: false }
     }
 }
+
+const showError = (message: string) => Toast.show(message, {
+    duration: Toast.durations.LONG,
+    animation: true,
+    hideOnPress: true,
+    position: Toast.positions.TOP,
+    shadow: true,
+    textColor: colors.greenDigital,
+    opacity: 0.8,
+    textStyle: {
+        fontFamily: 'title',
+        fontWeight: 'bold',
+        fontSize: 14,
+        textAlign: 'left'
+    },
+    containerStyle: {
+        backgroundColor: colors.screenColor,
+        borderRadius: 0,
+        borderColor: colors.greenDigital,
+        borderWidth: 2,
+    }
+});
 
 export const GET = async (path: string, options?: { silent?: boolean }) => {
     return makeRequest(path, 'GET', undefined, options?.silent);

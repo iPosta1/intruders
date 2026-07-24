@@ -32,7 +32,7 @@ export const MissionsCabin = ({ gameState, embedded = false }: { gameState?: Gam
                 </View>
             </ComputerScreen>
             <View style={styles.rejectionsContainer}>
-                <Text style={styles.rejectionsLable}>Rejections track</Text>
+                <Text style={styles.rejectionsLable}>REJECTION TRACK</Text>
                 {Array.from({ length: 5 }, (val, index) => index + 1).map(rejectionIndex => (<View style={styles.rejectionItem}>
                     <GameButton size={20} color={!!gameState.rejections[rejectionIndex]?.mission ? '#bc1e13' : '#fff'} round indicator
                         isEnabled={!!gameState.rejections[rejectionIndex]?.mission} />
@@ -64,18 +64,20 @@ const styles = StyleSheet.create({
     },
     rejectionsContainer: {
         width: "100%",
-        height: 20,
+        height: 30,
         justifyContent: 'center',
         alignItems: 'center',
         alignContent: 'center',
         maxWidth: 480,
-        marginTop: 5,
+        marginTop: 4,
         flexDirection: 'row',
     },
     rejectionsLable: {
-        fontFamily: 'basic',
-        fontSize: 13,
-        color: colors.lightGray1,
+        fontFamily: 'title',
+        fontSize: 19,
+        color: colors.phosphorBright,
+        letterSpacing: 0.8,
+        marginRight: 8,
         justifyContent: 'center',
         alignItems: 'center',
         alignContent: 'center',

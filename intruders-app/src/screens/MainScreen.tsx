@@ -19,6 +19,7 @@ import { LogoScreen } from "../components/shared/logoScreen";
 import { GameButton } from "../components/shared/gameButton";
 import { colors } from "../utils/constants";
 import { ComputerScreen } from "../components/shared/computerScreen";
+import { useSWRConfig } from "swr";
 
 const CELL_COUNT = 4;
 
@@ -28,6 +29,7 @@ export const MainScreen = () => {
     const { width, height } = useWindowDimensions();
     const cellSize = Math.max(36, Math.min(48, (width - 104) / 4));
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+    const { mutate: mutateCache } = useSWRConfig();
     const [value, setValue] = useState('');
     const ref = useBlurOnFulfill({ value, cellCount: CELL_COUNT });
     const [props, getCellOnLayoutHandler] = useClearByFocusCell({
@@ -39,29 +41,48 @@ export const MainScreen = () => {
     const redirectedGameId = useRef<string | null>(null);
 
     useEffect(() => {
-        const activeGameId = userGameStatus?.gameId;
+        const activeGameId = userGameStatus?.gameId?.trim().toLowerCase();
         if (isFocused && activeGameId && redirectedGameId.current !== activeGameId) {
             redirectedGameId.current = activeGameId;
             navigation.reset({ index: 0, routes: [{ name: 'GameScreen', params: { gameId: activeGameId } }] });
+        } else if (!activeGameId) {
+            redirectedGameId.current = null;
         }
     }, [isFocused, navigation, userGameStatus?.gameId]);
 
     const onCreateGame = async () => {
         setIsLoading(true);
-        const status = await POST('/create-game');
-        if (status.ok) {
-            navigation.replace('GameScreen', { gameId: status.data.gameId });
+        try {
+            const status = await POST('/create-game');
+            if (status.ok) {
+                const createdGameId = status.data.gameId.trim().toLowerCase();
+                redirectedGameId.current = createdGameId;
+                await mutateCache(['/find-game', player?.id], status.data, { revalidate: false });
+                navigation.replace('GameScreen', { gameId: createdGameId });
+            }
+        } finally {
+            setIsLoading(false);
         }
-        setIsLoading(false);
     }
 
     const onJoinGame = async (gameId: string) => {
         setIsLoading(true);
-        const status = await POST('/join-game', { gameId: gameId.toLocaleLowerCase() });
-        if (status.ok) {
-            navigation.replace('GameScreen', { gameId });
+        try {
+            const normalizedGameId = gameId.trim().toLowerCase();
+            const status = await POST('/join-game', { gameId: normalizedGameId });
+            if (status.ok) {
+                const joinedGameId = status.data?.gameId?.trim().toLowerCase() || normalizedGameId;
+                redirectedGameId.current = joinedGameId;
+                await mutateCache(
+                    ['/find-game', player?.id],
+                    status.data || { gameId: joinedGameId },
+                    { revalidate: false },
+                );
+                navigation.replace('GameScreen', { gameId: joinedGameId });
+            }
+        } finally {
+            setIsLoading(false);
         }
-        setIsLoading(false);
     }
 
     const onChangeText = (input: string) => {
